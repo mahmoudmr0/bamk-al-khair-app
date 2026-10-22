@@ -240,10 +240,8 @@
 
     <!-- JavaScript App Logic -->
     <script>
-        // Initial Mock Data
         let employees = JSON.parse(localStorage.getItem('bk_employees')) || [
-            { id: '1', fullName: 'أحمد محمد علي', firstName: 'أحمد', title: 'مسؤول تنمية موارد', pin: '1001', isAdmin: false },
-            { id: 'admin_id', fullName: 'مدير النظام (Admin)', firstName: 'Admin', title: 'المدير العام', pin: '123456', isAdmin: true }
+            { id: '1', fullName: 'أحمد محمد علي', firstName: 'أحمد', title: 'مسؤول تنمية موارد', pin: '1001' }
         ];
 
         let logs = JSON.parse(localStorage.getItem('bk_logs')) || [];
@@ -256,13 +254,13 @@
             localStorage.setItem('bk_logs', JSON.stringify(logs));
         }
 
-        // Text To Speech with English option for Admin
-        function speak(text, lang = 'ar-SA') {
+        // Direct Speech Function
+        function speak(text) {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = lang;
-                utterance.rate = 0.9;
+                utterance.lang = 'ar-SA';
+                utterance.rate = 0.85;
                 window.speechSynthesis.speak(utterance);
             }
         }
@@ -300,22 +298,17 @@
                 document.getElementById('welcomeName').innerText = detectedEmp.fullName;
                 document.getElementById('welcomeTitle').innerText = detectedEmp.title;
                 document.getElementById('welcomeCard').classList.remove('hidden');
-
-                if (detectedEmp.isAdmin || detectedEmp.firstName === 'Admin') {
-                    speak('Welcome Admin', 'en-US');
-                } else {
-                    speak(`مرحباً بك في نظام البصمة الإلكترونية لمؤسسة بنك الخير يا ${detectedEmp.firstName}`, 'ar-SA');
-                }
+                speak(`مرحباً بك في نظام البصمة الإلكترونية لمؤسسة بنك الخير يا ${detectedEmp.firstName}`);
             } else {
                 document.getElementById('welcomeCard').classList.add('hidden');
             }
         }
 
-        // Handle Attendance
+        // Handle Employee Attendance
         function handleAttendance(type) {
             if (!detectedEmp) {
                 document.getElementById('statusMsg').innerText = '❌ البرجاء إدخال رقم سري صحيح أولاً';
-                speak('الرقم السري غير صحيح', 'ar-SA');
+                speak('الرقم السري غير صحيح');
                 return;
             }
 
@@ -325,11 +318,7 @@
 
             if (type === 'IN') {
                 logs.push({ id: Date.now(), empId: detectedEmp.id, empName: detectedEmp.fullName, date: dateStr, inTime: timeStr, outTime: null });
-                if (detectedEmp.isAdmin || detectedEmp.firstName === 'Admin') {
-                    speak('Welcome Admin', 'en-US');
-                } else {
-                    speak(`تم تسجيل حضورك بنجاح يا ${detectedEmp.firstName}، نتمنى لك يوماً موفقاً`, 'ar-SA');
-                }
+                speak(`تم تسجيل حضورك بنجاح يا ${detectedEmp.firstName}، نتمنى لك يوماً موفقاً`);
                 document.getElementById('statusMsg').innerText = `🟢 تم تسجيل دخول: ${detectedEmp.fullName} (${timeStr})`;
             } else {
                 let lastLog = logs.slice().reverse().find(l => l.empId === detectedEmp.id && !l.outTime);
@@ -338,11 +327,7 @@
                 } else {
                     logs.push({ id: Date.now(), empId: detectedEmp.id, empName: detectedEmp.fullName, date: dateStr, inTime: '--', outTime: timeStr });
                 }
-                if (detectedEmp.isAdmin || detectedEmp.firstName === 'Admin') {
-                    speak('Goodbye Admin', 'en-US');
-                } else {
-                    speak(`تم تسجيل خروجك بنجاح يا ${detectedEmp.firstName}، شكراً لك ومع السلامة`, 'ar-SA');
-                }
+                speak(`تم تسجيل خروجك بنجاح يا ${detectedEmp.firstName}، شكراً لك ومع السلامة`);
                 document.getElementById('statusMsg').innerText = `🔴 تم تسجيل خروج: ${detectedEmp.fullName} (${timeStr})`;
             }
 
@@ -350,7 +335,7 @@
             setTimeout(clearPin, 3000);
         }
 
-        // Admin Auth
+        // Admin Auth & Speech Integration
         function toggleAdminModal() {
             document.getElementById('adminModal').classList.toggle('hidden');
         }
@@ -359,7 +344,7 @@
             const u = document.getElementById('adminUser').value.trim();
             const p = document.getElementById('adminPass').value.trim();
             
-            if (u === 'admin' && p === '123456') {
+            if ((u === 'admin' || u === 'ADMIN') && p === '123456') {
                 document.getElementById('adminLoginForm').classList.add('hidden');
                 document.getElementById('adminDashboard').classList.remove('hidden');
                 document.getElementById('adminLoginErr').classList.add('hidden');
@@ -367,8 +352,12 @@
                 document.getElementById('adminPass').value = '';
                 renderEmpTable();
                 renderReports();
+                
+                // Voice Greeting on Admin Dashboard Open
+                speak('أهلاً بك يا مدير النظام في لوحة التحكم');
             } else {
                 document.getElementById('adminLoginErr').classList.remove('hidden');
+                speak('اسم المستخدم أو كلمة السر غير صحيحة');
             }
         }
 
@@ -376,6 +365,9 @@
             document.getElementById('adminDashboard').classList.add('hidden');
             document.getElementById('adminLoginForm').classList.remove('hidden');
             toggleAdminModal();
+            
+            // Voice Greeting on Admin Logout
+            speak('تم تسجيل الخروج بنجاح');
         }
 
         function switchAdminTab(tab) {
@@ -441,7 +433,7 @@
                     emp.pin = pin;
                 }
             } else {
-                employees.push({ id: Date.now().toString(), fullName: name, firstName: firstName, title: title, pin: pin, isAdmin: false });
+                employees.push({ id: Date.now().toString(), fullName: name, firstName: firstName, title: title, pin: pin });
             }
 
             saveToStorage();
@@ -470,7 +462,6 @@
             document.getElementById('cancelEditBtn').classList.add('hidden');
         }
 
-        // Direct Confirmed Delete Function
         function deleteEmployee(id) {
             const emp = employees.find(e => e.id === id);
             if (!emp) return;
