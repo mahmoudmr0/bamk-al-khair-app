@@ -113,13 +113,13 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-slate-300 mb-1">اسم المستخدم</label>
-                    <input type="text" id="adminUser" placeholder="admin" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-sm focus:border-emerald-500 focus:outline-none">
+                    <input type="text" id="adminUser" placeholder="أدخل اسم المستخدم" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-sm focus:border-emerald-500 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-300 mb-1">كلمة السر</label>
-                    <input type="password" id="adminPass" placeholder="123456" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-sm focus:border-emerald-500 focus:outline-none">
+                    <input type="password" id="adminPass" placeholder="أدخل كلمة السر" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-sm focus:border-emerald-500 focus:outline-none">
                 </div>
-                <div id="adminLoginErr" class="text-xs text-rose-400 hidden">اسم المستخدم أو كلمة السر غير صحيحة</div>
+                <div id="adminLoginErr" class="text-xs text-rose-400 hidden">❌ يجب كتابة اسم المستخدم وكلمة السر الصحيحة!</div>
                 <button onclick="loginAdmin()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg transition">دخول</button>
             </div>
         </div>
@@ -176,7 +176,7 @@
                         <thead class="bg-slate-800 text-slate-200 border-b border-slate-700">
                             <tr>
                                 <th class="p-3">الاسم الكامل</th>
-                                <th class="p-3">الاسم الأول (للصوت)</th>
+                                <th class="p-3">الاسم الصوتي</th>
                                 <th class="p-3">المسمى الوظيفي</th>
                                 <th class="p-3">رقم البصمة PIN</th>
                                 <th class="p-3 text-center no-print">إجراءات الحذف والتعديل</th>
@@ -242,8 +242,8 @@
     <script>
         // Initial Mock Data
         let employees = JSON.parse(localStorage.getItem('bk_employees')) || [
-            { id: '1', fullName: 'أحمد محمد علي', firstName: 'أحمد', title: 'مسؤول تنمية موارد', pin: '1001' },
-            { id: '2', fullName: 'محمود السيد رفاعي', firstName: 'محمود', title: 'مدير النظام', pin: '1002' }
+            { id: '1', fullName: 'أحمد محمد علي', firstName: 'أحمد', title: 'مسؤول تنمية موارد', pin: '1001', isAdmin: false },
+            { id: 'admin_id', fullName: 'مدير النظام (Admin)', firstName: 'Admin', title: 'المدير العام', pin: '123456', isAdmin: true }
         ];
 
         let logs = JSON.parse(localStorage.getItem('bk_logs')) || [];
@@ -256,12 +256,12 @@
             localStorage.setItem('bk_logs', JSON.stringify(logs));
         }
 
-        // Text To Speech
-        function speak(text) {
+        // Text To Speech with English option for Admin
+        function speak(text, lang = 'ar-SA') {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'ar-SA';
+                utterance.lang = lang;
                 utterance.rate = 0.9;
                 window.speechSynthesis.speak(utterance);
             }
@@ -300,7 +300,12 @@
                 document.getElementById('welcomeName').innerText = detectedEmp.fullName;
                 document.getElementById('welcomeTitle').innerText = detectedEmp.title;
                 document.getElementById('welcomeCard').classList.remove('hidden');
-                speak(`مرحباً بك في نظام البصمة الإلكترونية لمؤسسة بنك الخير يا ${detectedEmp.firstName}`);
+
+                if (detectedEmp.isAdmin || detectedEmp.firstName === 'Admin') {
+                    speak('Welcome Admin', 'en-US');
+                } else {
+                    speak(`مرحباً بك في نظام البصمة الإلكترونية لمؤسسة بنك الخير يا ${detectedEmp.firstName}`, 'ar-SA');
+                }
             } else {
                 document.getElementById('welcomeCard').classList.add('hidden');
             }
@@ -310,7 +315,7 @@
         function handleAttendance(type) {
             if (!detectedEmp) {
                 document.getElementById('statusMsg').innerText = '❌ البرجاء إدخال رقم سري صحيح أولاً';
-                speak('الرقم السري غير صحيح');
+                speak('الرقم السري غير صحيح', 'ar-SA');
                 return;
             }
 
@@ -320,7 +325,11 @@
 
             if (type === 'IN') {
                 logs.push({ id: Date.now(), empId: detectedEmp.id, empName: detectedEmp.fullName, date: dateStr, inTime: timeStr, outTime: null });
-                speak(`تم تسجيل حضورك بنجاح يا ${detectedEmp.firstName}، نتمنى لك يوماً موفقاً`);
+                if (detectedEmp.isAdmin || detectedEmp.firstName === 'Admin') {
+                    speak('Welcome Admin', 'en-US');
+                } else {
+                    speak(`تم تسجيل حضورك بنجاح يا ${detectedEmp.firstName}، نتمنى لك يوماً موفقاً`, 'ar-SA');
+                }
                 document.getElementById('statusMsg').innerText = `🟢 تم تسجيل دخول: ${detectedEmp.fullName} (${timeStr})`;
             } else {
                 let lastLog = logs.slice().reverse().find(l => l.empId === detectedEmp.id && !l.outTime);
@@ -329,7 +338,11 @@
                 } else {
                     logs.push({ id: Date.now(), empId: detectedEmp.id, empName: detectedEmp.fullName, date: dateStr, inTime: '--', outTime: timeStr });
                 }
-                speak(`تم تسجيل خروجك بنجاح يا ${detectedEmp.firstName}، شكراً لك ومع السلامة`);
+                if (detectedEmp.isAdmin || detectedEmp.firstName === 'Admin') {
+                    speak('Goodbye Admin', 'en-US');
+                } else {
+                    speak(`تم تسجيل خروجك بنجاح يا ${detectedEmp.firstName}، شكراً لك ومع السلامة`, 'ar-SA');
+                }
                 document.getElementById('statusMsg').innerText = `🔴 تم تسجيل خروج: ${detectedEmp.fullName} (${timeStr})`;
             }
 
@@ -345,10 +358,13 @@
         function loginAdmin() {
             const u = document.getElementById('adminUser').value.trim();
             const p = document.getElementById('adminPass').value.trim();
-            if ((u === 'admin' || u === '') && (p === '123456' || p === '0000')) {
+            
+            if (u === 'admin' && p === '123456') {
                 document.getElementById('adminLoginForm').classList.add('hidden');
                 document.getElementById('adminDashboard').classList.remove('hidden');
                 document.getElementById('adminLoginErr').classList.add('hidden');
+                document.getElementById('adminUser').value = '';
+                document.getElementById('adminPass').value = '';
                 renderEmpTable();
                 renderReports();
             } else {
@@ -425,7 +441,7 @@
                     emp.pin = pin;
                 }
             } else {
-                employees.push({ id: Date.now().toString(), fullName: name, firstName: firstName, title: title, pin: pin });
+                employees.push({ id: Date.now().toString(), fullName: name, firstName: firstName, title: title, pin: pin, isAdmin: false });
             }
 
             saveToStorage();
@@ -454,8 +470,12 @@
             document.getElementById('cancelEditBtn').classList.add('hidden');
         }
 
+        // Direct Confirmed Delete Function
         function deleteEmployee(id) {
-            if (confirm('هل أنت تأكد من حذف هذا الموظف نهائياً من النظام؟')) {
+            const emp = employees.find(e => e.id === id);
+            if (!emp) return;
+
+            if (confirm(`هل أنت متأكد من حذف الموظف (${emp.fullName}) نهائياً من النظام؟`)) {
                 employees = employees.filter(e => e.id !== id);
                 saveToStorage();
                 renderEmpTable();
