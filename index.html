@@ -266,7 +266,7 @@
                             <i class="fa-solid fa-file-excel"></i> تصدير Excel خفيف
                         </button>
                         <button id="clearLogsBtn" onclick="clearAllLogs()" class="bg-rose-800 hover:bg-rose-700 text-rose-200 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1 border border-rose-600">
-                            <i class="fa-solid fa-trash-can"></i> مسح جميع السجلات
+                            <i class="fa-solid fa-trash-can"></i> مسح سجلات الفرع
                         </button>
                     </div>
                 </div>
@@ -309,7 +309,7 @@
 
     <!-- JavaScript App Logic -->
     <script>
-        const GOOGLE_SHEET_URL = "ضع_رابط_سكربت_جوجل_هنا";
+        const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbyZghIJqDWDwL38gMjTKW5gLi5W3T1nDk3JG9odWC_ELq_PelRAlgs4aVv9WdWi6af7/exec";
 
         // Initial Storage Structures
         let branches = JSON.parse(localStorage.getItem('bk_branches')) || [
@@ -693,7 +693,6 @@
                 filterB.innerHTML += `<option value="${b.id}">${b.name}</option>`;
             });
 
-            // If Branch Manager logged in, limit selection to his branch only
             if (currentAuth && currentAuth !== 'SUPER') {
                 empSel.value = currentAuth.id;
                 empSel.disabled = true;
@@ -736,7 +735,6 @@
                 `;
             });
 
-            // Populate Employee Filter Dropdown
             const sel = document.getElementById('filterEmp');
             sel.innerHTML = '<option value="ALL">جميع الموظفين</option>';
             filteredEmps.forEach(e => {
@@ -818,12 +816,10 @@
 
             let filtered = logs;
 
-            // Branch Filter
             if (selectedBranch !== 'ALL') {
                 filtered = filtered.filter(l => l.branchId === selectedBranch);
             }
 
-            // Employee Filter
             if (selectedEmp !== 'ALL') {
                 filtered = filtered.filter(l => l.empId === selectedEmp);
             }
@@ -875,20 +871,52 @@
             }
         }
 
+        // Smart Branch-isolated Clear Logs Function
         function clearAllLogs() {
-            if (confirm('⚠️ تحذير: هل أنت متأكد من مسح جميع سجلات الحضور بالكامل؟')) {
-                logs = [];
-                saveToStorage();
-                renderReports();
+            if (currentAuth === 'SUPER') {
+                const selectedBranch = document.getElementById('filterBranch').value;
+                if (selectedBranch === 'ALL') {
+                    if (confirm('⚠️ تحذير الإدارة العامة: هل أنت متأكد من مسح جميع سجلات الحضور لكل الفروع؟')) {
+                        logs = [];
+                        saveToStorage();
+                        renderReports();
+                    }
+                } else {
+                    const bObj = branches.find(b => b.id === selectedBranch);
+                    const bName = bObj ? bObj.name : 'الفرع المحدد';
+                    if (confirm(`⚠️ تحذير: هل أنت متأكد من مسح جميع سجلات (${bName}) فقط؟`)) {
+                        logs = logs.filter(l => l.branchId !== selectedBranch);
+                        saveToStorage();
+                        renderReports();
+                    }
+                }
+            } else {
+                if (confirm(`⚠️ هل أنت متأكد من مسح جميع سجلات الحضور الخاصة بـ (${currentAuth.name}) فقط؟`)) {
+                    logs = logs.filter(l => l.branchId !== currentAuth.id);
+                    saveToStorage();
+                    renderReports();
+                }
             }
         }
 
         function exportCSV() {
             let csv = 'الفرع,اسم الموظف,التاريخ,وقت الدخول,وقت الخروج,الحالة\n';
-            logs.forEach(l => {
+            
+            let exportData = logs;
+            if (currentAuth && currentAuth !== 'SUPER') {
+                exportData = logs.filter(l => l.branchId === currentAuth.id);
+            } else {
+                const selectedBranch = document.getElementById('filterBranch').value;
+                if (selectedBranch !== 'ALL') {
+                    exportData = logs.filter(l => l.branchId === selectedBranch);
+                }
+            }
+
+            exportData.forEach(l => {
                 const status = (l.inTime && l.outTime) ? 'مكتمل' : 'قيد الشفت';
                 csv += `"${l.branchName || 'الفرع الرئيسي'}","${l.empName}","${l.date}","${l.inTime || '--'}","${l.outTime || '--'}","${status}"\n`;
             });
+
             const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
