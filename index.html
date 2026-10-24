@@ -106,26 +106,45 @@
 
         <div id="adminDashboard" class="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-5xl max-h-[90vh] overflow-y-auto hidden">
             <div class="flex justify-between items-center pb-4 border-b border-slate-700 mb-6">
-                <h3 class="text-xl font-bold text-emerald-400">لوحة الإدارة الموحدة (مربوطة بالشيت مباشرة)</h3>
+                <h3 class="text-xl font-bold text-emerald-400">لوحة الإدارة الموحدة</h3>
                 <button onclick="logoutAdmin()" class="bg-rose-900/60 text-rose-200 px-3 py-1.5 rounded-lg text-xs font-bold">تسجيل الخروج</button>
             </div>
 
             <div class="flex border-b border-slate-700 mb-6">
-                <button id="tabEmpBtn" onclick="switchTab('emp')" class="px-4 py-2 font-bold text-sm text-emerald-400 border-b-2 border-emerald-500">إدارة الموظفين</button>
+                <button id="tabEmpBtn" onclick="switchTab('emp')" class="px-4 py-2 font-bold text-sm text-emerald-400 border-b-2 border-emerald-500">إدارة الموظفين والفروع</button>
                 <button id="tabRepBtn" onclick="switchTab('rep')" class="px-4 py-2 font-bold text-sm text-slate-400">التقارير وسجلات الحضور</button>
             </div>
 
-            <!-- Tab 1: Employees -->
+            <!-- Tab 1: Employees and Branches -->
             <div id="tabEmp" class="space-y-6">
-                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700">
-                    <h4 class="text-sm font-bold text-slate-200 mb-3">إضافة موظف جديد (سيتم حفظه في Google Sheets)</h4>
+                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-4">
+                    <h4 class="text-sm font-bold text-slate-200">إضافة موظف جديد</h4>
                     <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                        <input type="text" id="empBranch" placeholder="اسم الفرع" class="bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white">
-                        <input type="text" id="empFullName" placeholder="الاسم الكامل" class="bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white">
-                        <input type="text" id="empJobTitle" placeholder="المسمى الوظيفي" class="bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white">
-                        <input type="text" id="empPin" maxlength="6" placeholder="رقم الـ PIN" class="bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white">
+                        <div>
+                            <label class="text-xs text-slate-400 mb-1 block">اختر الفرع:</label>
+                            <select id="empBranchSelect" class="bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-emerald-400 w-full focus:outline-none">
+                                <option value="الفرع الرئيسي">الفرع الرئيسي</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400 mb-1 block">الاسم الكامل:</label>
+                            <input type="text" id="empFullName" placeholder="الاسم الكامل" class="bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white w-full">
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400 mb-1 block">المسمى الوظيفي:</label>
+                            <input type="text" id="empJobTitle" placeholder="المسمى الوظيفي" class="bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white w-full">
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400 mb-1 block">رقم البصمة (PIN):</label>
+                            <input type="text" id="empPin" maxlength="6" placeholder="PIN" class="bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white w-full">
+                        </div>
                     </div>
-                    <button onclick="saveEmployeeToCloud()" class="mt-3 bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg text-sm">حفظ الموظف في الشيت</button>
+
+                    <div class="flex items-center gap-3">
+                        <button onclick="saveEmployeeToCloud()" class="bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg text-sm">حفظ الموظف في الشيت</button>
+                        <input type="text" id="newBranchInput" placeholder="اسم فرع جديد" class="bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white">
+                        <button onclick="addNewBranchOption()" class="bg-slate-700 hover:bg-slate-600 text-amber-400 font-bold py-2 px-3 rounded-lg text-sm">+ إضافة فرع للقائمة</button>
+                    </div>
                 </div>
 
                 <div class="overflow-x-auto bg-slate-900 rounded-xl border border-slate-700">
@@ -145,6 +164,16 @@
 
             <!-- Tab 2: Reports -->
             <div id="tabRep" class="space-y-6 hidden">
+                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                        <label for="branchFilter" class="text-sm font-bold text-slate-200 whitespace-nowrap">عرض تقرير فرع:</label>
+                        <select id="branchFilter" onchange="renderTables()" class="bg-slate-800 border border-slate-700 text-emerald-400 font-bold rounded-lg p-2 text-sm w-full sm:w-64 focus:outline-none">
+                            <option value="ALL">كل الفروع</option>
+                        </select>
+                    </div>
+                    <span id="reportCount" class="text-xs text-slate-400 font-semibold"></span>
+                </div>
+
                 <div class="overflow-x-auto bg-slate-900 rounded-xl border border-slate-700">
                     <table class="w-full text-right text-xs text-slate-300">
                         <thead class="bg-slate-800 text-slate-200 border-b border-slate-700">
@@ -173,7 +202,6 @@
         let currentPin = '';
         let detectedEmp = null;
 
-        // التحميل التلقائي الفوري من شيت جوجل
         async function loadCloudData() {
             document.getElementById('camStatus').innerHTML = `<i class="fa-solid fa-sync animate-spin me-1"></i> جاري تحميل بيانات الموظفين...`;
             try {
@@ -184,10 +212,43 @@
                 cloudLogs = data.logs || [];
 
                 document.getElementById('camStatus').innerHTML = `<i class="fa-solid fa-circle text-[8px] animate-pulse me-1"></i> الجهاز جاهز للبصمة (${cloudEmployees.length} موظف)`;
+                
+                updateBranchDropdowns();
                 renderTables();
             } catch (err) {
                 document.getElementById('camStatus').innerHTML = `❌ خطأ في الاتصال بشيت جوجل`;
             }
+        }
+
+        function updateBranchDropdowns() {
+            const filterSelect = document.getElementById('branchFilter');
+            const empBranchSelect = document.getElementById('empBranchSelect');
+            
+            const branches = new Set(['الفرع الرئيسي']);
+            cloudEmployees.forEach(e => { if(e.branchName) branches.add(e.branchName.trim()); });
+            cloudLogs.forEach(l => { if(l.branchName) branches.add(l.branchName.trim()); });
+
+            filterSelect.innerHTML = '<option value="ALL">كل الفروع</option>';
+            empBranchSelect.innerHTML = '';
+
+            branches.forEach(b => {
+                filterSelect.innerHTML += `<option value="${b}">${b}</option>`;
+                empBranchSelect.innerHTML += `<option value="${b}">${b}</option>`;
+            });
+        }
+
+        function addNewBranchOption() {
+            const val = document.getElementById('newBranchInput').value.trim();
+            if(!val) return;
+            
+            const empBranchSelect = document.getElementById('empBranchSelect');
+            const opt = document.createElement('option');
+            opt.value = val;
+            opt.innerText = val;
+            empBranchSelect.appendChild(opt);
+            empBranchSelect.value = val;
+            document.getElementById('newBranchInput').value = '';
+            alert(`تم إضافة ${val} لقائمة الفروع!`);
         }
 
         function speak(text) {
@@ -254,7 +315,6 @@
                 status: type === 'IN' ? 'حضور' : 'انصراف'
             };
 
-            // إرسال لشيت جوجل فوراً
             fetch(GOOGLE_SHEET_URL, {
                 method: "POST",
                 mode: "no-cors",
@@ -271,18 +331,17 @@
             }
 
             setTimeout(clearPin, 2000);
-            setTimeout(loadCloudData, 3000); // تحديث القائمة بعد البصمة
+            setTimeout(loadCloudData, 3000);
         }
 
-        // إدراج موظف جديد لشيت جوجل مباشرة
         async function saveEmployeeToCloud() {
-            const b = document.getElementById('empBranch').value.trim();
+            const b = document.getElementById('empBranchSelect').value;
             const n = document.getElementById('empFullName').value.trim();
             const t = document.getElementById('empJobTitle').value.trim();
             const p = document.getElementById('empPin').value.trim();
 
             if (!b || !n || !p) {
-                alert('يرجى كتابة الفرع والاسم ورقم الـ PIN');
+                alert('يرجى كتابة الاسم ورقم الـ PIN وتحديد الفرع');
                 return;
             }
 
@@ -302,16 +361,16 @@
             });
 
             alert('تمت إضافة الموظف بنجاح إلى Google Sheets!');
-            document.getElementById('empBranch').value = '';
             document.getElementById('empFullName').value = '';
             document.getElementById('empJobTitle').value = '';
             document.getElementById('empPin').value = '';
 
-            setTimeout(loadCloudData, 2000); // إعادة تحميل القائمة
+            setTimeout(loadCloudData, 2000);
         }
 
         function renderTables() {
-            // الموظفين
+            const selectedBranch = document.getElementById('branchFilter').value;
+
             const empBody = document.getElementById('empTableBody');
             empBody.innerHTML = '';
             cloudEmployees.forEach(e => {
@@ -325,10 +384,17 @@
                 `;
             });
 
-            // التقارير
             const repBody = document.getElementById('repTableBody');
             repBody.innerHTML = '';
-            cloudLogs.slice().reverse().forEach(l => {
+
+            let filteredLogs = cloudLogs;
+            if (selectedBranch !== 'ALL') {
+                filteredLogs = cloudLogs.filter(l => String(l.branchName).trim() === selectedBranch.trim());
+            }
+
+            document.getElementById('reportCount').innerText = `عدد السجلات المعروضة: ${filteredLogs.length}`;
+
+            filteredLogs.slice().reverse().forEach(l => {
                 repBody.innerHTML += `
                     <tr class="border-b border-slate-800">
                         <td class="p-3 font-bold text-amber-400">${l.branchName}</td>
@@ -343,19 +409,28 @@
         }
 
         function toggleAdminModal() { document.getElementById('adminModal').classList.toggle('hidden'); }
+        
         function loginAdmin() {
             const u = document.getElementById('adminUser').value;
             const p = document.getElementById('adminPass').value;
             if (u === 'admin' && p === '123456') {
                 document.getElementById('adminLoginForm').classList.add('hidden');
                 document.getElementById('adminDashboard').classList.remove('hidden');
-            } else { alert('خطأ في كلمة السر'); }
+                
+                // صوت الترحيب بالمدير
+                speak('مرحباً بك يا مدير النظام');
+            } else { 
+                alert('خطأ في كلمة السر'); 
+                speak('كلمة السر غير صحيحة');
+            }
         }
+
         function logoutAdmin() {
             document.getElementById('adminDashboard').classList.add('hidden');
             document.getElementById('adminLoginForm').classList.remove('hidden');
             toggleAdminModal();
         }
+
         function switchTab(tab) {
             if (tab === 'emp') {
                 document.getElementById('tabEmp').classList.remove('hidden');
