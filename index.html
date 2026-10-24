@@ -4,29 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>نظام البصمة الإلكترونية - مؤسسة بنك الخير</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
         body { font-family: 'Cairo', sans-serif; background-color: #0f172a; color: #f8fafc; }
         .numpad-btn { transition: all 0.15s ease; }
         .numpad-btn:active { transform: scale(0.92); }
-        @media print {
-            header, footer, #employeeSection, #adminLoginForm, .no-print { display: none !important; }
-            #adminModal, #adminDashboard, #tabRep { display: block !important; position: static !important; background: white !important; color: black !important; }
-            table { width: 100% !important; border-collapse: collapse !important; color: black !important; }
-            th, td { border: 1px solid #000 !important; padding: 8px !important; text-align: right !important; }
-            .emp-photo-print { width: 45px !important; height: 45px !important; object-fit: cover !important; border-radius: 4px !important; }
-        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between bg-slate-900">
-
-    <!-- Hidden Video & Canvas for Camera Capture -->
-    <video id="webcamVideo" autoplay playsinline class="hidden"></video>
-    <canvas id="photoCanvas" class="hidden"></canvas>
+<body class="min-h-screen flex flex-col justify-between bg-slate-900" onload="loadCloudData()">
 
     <!-- Header -->
     <header class="bg-slate-800 border-b border-slate-700 p-4 shadow-lg">
@@ -37,13 +24,13 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold text-emerald-400">مؤسسة بنك الخير للتنمية المستدامة</h1>
-                    <p class="text-xs text-slate-400">نظام البصمة الإلكترونية متعدد الفروع</p>
+                    <p class="text-xs text-slate-400">نظام البصمة الموحد المربوط بـ Google Sheets</p>
                 </div>
             </div>
             <div>
-                <button id="adminBtn" onclick="toggleAdminModal()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-4 py-2 rounded-lg text-sm font-semibold transition border border-slate-600 flex items-center gap-2">
+                <button onclick="toggleAdminModal()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-4 py-2 rounded-lg text-sm font-semibold transition border border-slate-600 flex items-center gap-2">
                     <i class="fa-solid fa-user-shield text-amber-400"></i>
-                    <span id="loginBtnText">دخول المدير</span>
+                    <span>دخول المدير</span>
                 </button>
             </div>
         </div>
@@ -55,19 +42,17 @@
             
             <div class="mb-4">
                 <span id="camStatus" class="inline-block px-3 py-1 bg-emerald-950 text-emerald-400 text-xs font-semibold rounded-full border border-emerald-800 mb-2">
-                    <i class="fa-solid fa-circle text-[8px] animate-pulse me-1"></i> الجهاز جاهز للبصمة
+                    <i class="fa-solid fa-sync animate-spin me-1"></i> جاري مزامنة الموظفين من الشيت...
                 </span>
                 <h2 class="text-xl font-bold text-slate-100">سجّل رقمك السري (PIN)</h2>
             </div>
 
-            <!-- PIN Display -->
             <div class="mb-6 relative">
                 <input type="password" id="pinDisplay" readonly placeholder="• • • •" 
                        class="w-full text-center text-3xl font-bold tracking-widest bg-slate-900 border-2 border-emerald-500/50 text-emerald-400 py-3 rounded-xl shadow-inner focus:outline-none">
             </div>
 
-            <!-- Welcomed Employee Info Card -->
-            <div id="welcomeCard" class="hidden mb-6 p-3 bg-emerald-900/40 border border-emerald-500/40 rounded-xl text-emerald-200 animate-fade-in flex items-center justify-center gap-3">
+            <div id="welcomeCard" class="hidden mb-6 p-3 bg-emerald-900/40 border border-emerald-500/40 rounded-xl text-emerald-200 flex items-center justify-center gap-3">
                 <i class="fa-solid fa-circle-check text-emerald-400 text-2xl"></i>
                 <div class="text-right">
                     <div id="welcomeName" class="font-bold text-lg text-white">---</div>
@@ -78,149 +63,69 @@
 
             <!-- Numpad -->
             <div class="grid grid-cols-3 gap-3 mb-6 dir-ltr">
-                <button onclick="pressNum('1')" class="numpad-btn bg-slate-700 hover:bg-slate-600 text-2xl font-bold text-slate-100 py-3 rounded-xl border border-slate-600">1</button>
-                <button onclick="pressNum('2')" class="numpad-btn bg-slate-700 hover:bg-slate-600 text-2xl font-bold text-slate-100 py-3 rounded-xl border border-slate-600">2</button>
-                <button onclick="pressNum('3')" class="numpad-btn bg-slate-700 hover:bg-slate-600 text-2xl font-bold text-slate-100 py-3 rounded-xl border border-slate-600">3</button>
-                <button onclick="pressNum('4')" class="numpad-btn bg-slate-700 hover:bg-slate-600 text-2xl font-bold text-slate-100 py-3 rounded-xl border border-slate-600">4</button>
-                <button onclick="pressNum('5')" class="numpad-btn bg-slate-700 hover:bg-slate-600 text-2xl font-bold text-slate-100 py-3 rounded-xl border border-slate-600">5</button>
-                <button onclick="pressNum('6')" class="numpad-btn bg-slate-700 hover:bg-slate-600 text-2xl font-bold text-slate-100 py-3 rounded-xl border border-slate-600">6</button>
-                <button onclick="pressNum('7')" class="numpad-btn bg-slate-700 hover:bg-slate-600 text-2xl font-bold text-slate-100 py-3 rounded-xl border border-slate-600">7</button>
-                <button onclick="pressNum('8')" class="numpad-btn bg-slate-700 hover:bg-slate-600 text-2xl font-bold text-slate-100 py-3 rounded-xl border border-slate-600">8</button>
-                <button onclick="pressNum('9')" class="numpad-btn bg-slate-700 hover:bg-slate-600 text-2xl font-bold text-slate-100 py-3 rounded-xl border border-slate-600">9</button>
-                <button onclick="clearPin()" class="numpad-btn bg-rose-900/60 hover:bg-rose-800 text-rose-200 text-sm font-bold py-3 rounded-xl border border-rose-700">مسح</button>
-                <button onclick="pressNum('0')" class="numpad-btn bg-slate-700 hover:bg-slate-600 text-2xl font-bold text-slate-100 py-3 rounded-xl border border-slate-600">0</button>
-                <button onclick="backspacePin()" class="numpad-btn bg-slate-700 hover:bg-slate-600 text-slate-300 text-lg py-3 rounded-xl border border-slate-600"><i class="fa-solid fa-delete-left"></i></button>
+                <button onclick="pressNum('1')" class="numpad-btn bg-slate-700 text-2xl font-bold text-slate-100 py-3 rounded-xl">1</button>
+                <button onclick="pressNum('2')" class="numpad-btn bg-slate-700 text-2xl font-bold text-slate-100 py-3 rounded-xl">2</button>
+                <button onclick="pressNum('3')" class="numpad-btn bg-slate-700 text-2xl font-bold text-slate-100 py-3 rounded-xl">3</button>
+                <button onclick="pressNum('4')" class="numpad-btn bg-slate-700 text-2xl font-bold text-slate-100 py-3 rounded-xl">4</button>
+                <button onclick="pressNum('5')" class="numpad-btn bg-slate-700 text-2xl font-bold text-slate-100 py-3 rounded-xl">5</button>
+                <button onclick="pressNum('6')" class="numpad-btn bg-slate-700 text-2xl font-bold text-slate-100 py-3 rounded-xl">6</button>
+                <button onclick="pressNum('7')" class="numpad-btn bg-slate-700 text-2xl font-bold text-slate-100 py-3 rounded-xl">7</button>
+                <button onclick="pressNum('8')" class="numpad-btn bg-slate-700 text-2xl font-bold text-slate-100 py-3 rounded-xl">8</button>
+                <button onclick="pressNum('9')" class="numpad-btn bg-slate-700 text-2xl font-bold text-slate-100 py-3 rounded-xl">9</button>
+                <button onclick="clearPin()" class="numpad-btn bg-rose-900/60 text-rose-200 text-sm font-bold py-3 rounded-xl">مسح</button>
+                <button onclick="pressNum('0')" class="numpad-btn bg-slate-700 text-2xl font-bold text-slate-100 py-3 rounded-xl">0</button>
+                <button onclick="backspacePin()" class="numpad-btn bg-slate-700 text-slate-300 text-lg py-3 rounded-xl"><i class="fa-solid fa-delete-left"></i></button>
             </div>
 
-            <!-- Action Buttons -->
             <div class="grid grid-cols-2 gap-4">
-                <button onclick="handleAttendance('IN')" class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-extrabold py-3 px-2 rounded-xl shadow-lg border border-emerald-400 flex items-center justify-center gap-2 text-base transition">
-                    <i class="fa-solid fa-right-to-bracket text-xl"></i>
-                    <span>تسجيل دخول</span>
+                <button onclick="handleAttendance('IN')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3 rounded-xl shadow-lg flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket"></i> تسجيل دخول
                 </button>
-                <button onclick="handleAttendance('OUT')" class="bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-extrabold py-3 px-2 rounded-xl shadow-lg border border-rose-400 flex items-center justify-center gap-2 text-base transition">
-                    <i class="fa-solid fa-right-from-bracket text-xl"></i>
-                    <span>تسجيل خروج</span>
+                <button onclick="handleAttendance('OUT')" class="bg-rose-600 hover:bg-rose-500 text-white font-extrabold py-3 rounded-xl shadow-lg flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-from-bracket"></i> تسجيل خروج
                 </button>
             </div>
 
-            <!-- Live Status Message -->
             <div id="statusMsg" class="mt-4 text-sm font-semibold text-slate-400 min-h-[24px]"></div>
         </div>
     </main>
 
     <!-- Admin Panel Modal -->
     <div id="adminModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        
-        <!-- Login View -->
         <div id="adminLoginForm" class="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-sm text-right">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold text-emerald-400"><i class="fa-solid fa-lock me-2"></i>دخول لوحة الإدارة</h3>
-                <button onclick="toggleAdminModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+                <h3 class="text-lg font-bold text-emerald-400"><i class="fa-solid fa-lock me-2"></i>دخول الإدارة</h3>
+                <button onclick="toggleAdminModal()" class="text-slate-400"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">اسم المستخدم</label>
-                    <input type="text" id="adminUser" placeholder="أدخل اسم المستخدم" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-sm focus:border-emerald-500 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">كلمة السر</label>
-                    <input type="password" id="adminPass" placeholder="أدخل كلمة السر" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-sm focus:border-emerald-500 focus:outline-none">
-                </div>
-                <div id="adminLoginErr" class="text-xs text-rose-400 hidden">❌ اسم المستخدم أو كلمة السر غير صحيحة!</div>
-                <button onclick="loginAdmin()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg transition">دخول</button>
+                <input type="text" id="adminUser" placeholder="اسم المستخدم" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-sm">
+                <input type="password" id="adminPass" placeholder="كلمة السر" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-sm">
+                <button onclick="loginAdmin()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg">دخول</button>
             </div>
         </div>
 
-        <!-- Admin Dashboard View -->
         <div id="adminDashboard" class="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-5xl max-h-[90vh] overflow-y-auto hidden">
-            <div class="flex justify-between items-center pb-4 border-b border-slate-700 mb-6 no-print">
-                <div>
-                    <h3 id="dashHeaderTitle" class="text-xl font-bold text-emerald-400 flex items-center gap-2">
-                        <i class="fa-solid fa-user-gear"></i> لوحة الإدارة العامة
-                    </h3>
-                    <p id="dashHeaderSub" class="text-xs text-slate-400">إدارة الفروع، الموظفين، وسجلات الحضور المرفقة بالصور</p>
-                </div>
-                <button onclick="logoutAdmin()" class="bg-rose-900/60 hover:bg-rose-800 text-rose-200 border border-rose-700 px-3 py-1.5 rounded-lg text-xs font-bold">
-                    تسجيل الخروج
-                </button>
+            <div class="flex justify-between items-center pb-4 border-b border-slate-700 mb-6">
+                <h3 class="text-xl font-bold text-emerald-400">لوحة الإدارة الموحدة (مربوطة بالشيت مباشرة)</h3>
+                <button onclick="logoutAdmin()" class="bg-rose-900/60 text-rose-200 px-3 py-1.5 rounded-lg text-xs font-bold">تسجيل الخروج</button>
             </div>
 
-            <!-- Admin Tabs -->
-            <div class="flex border-b border-slate-700 mb-6 no-print overflow-x-auto">
-                <button id="tabBranchesBtn" onclick="switchAdminTab('branches')" class="px-4 py-2 font-bold text-sm border-b-2 border-emerald-500 text-emerald-400 whitespace-nowrap">إدارة الفروع والمديرين</button>
-                <button id="tabEmpBtn" onclick="switchAdminTab('emp')" class="px-4 py-2 font-bold text-sm text-slate-400 hover:text-white whitespace-nowrap">إدارة الموظفين</button>
-                <button id="tabRepBtn" onclick="switchAdminTab('rep')" class="px-4 py-2 font-bold text-sm text-slate-400 hover:text-white whitespace-nowrap">التقارير وسجلات الحضور</button>
+            <div class="flex border-b border-slate-700 mb-6">
+                <button id="tabEmpBtn" onclick="switchTab('emp')" class="px-4 py-2 font-bold text-sm text-emerald-400 border-b-2 border-emerald-500">إدارة الموظفين</button>
+                <button id="tabRepBtn" onclick="switchTab('rep')" class="px-4 py-2 font-bold text-sm text-slate-400">التقارير وسجلات الحضور</button>
             </div>
 
-            <!-- Tab 0: Manage Branches (Super Admin Only) -->
-            <div id="tabBranches" class="space-y-6">
-                <div class="bg-slate-900 border border-slate-700 p-4 rounded-xl no-print">
-                    <h4 id="branchFormTitle" class="text-sm font-bold text-slate-200 mb-3"><i class="fa-solid fa-code-branch text-emerald-400 me-2"></i>إضافة فرع جديد ومدير فرع</h4>
-                    <input type="hidden" id="editBranchId">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                        <div>
-                            <label class="block text-xs text-slate-400 mb-1">اسم الفرع</label>
-                            <input type="text" id="branchName" placeholder="مثال: فرع الجيزة" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-emerald-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-slate-400 mb-1">اسم مستخدم مدير الفرع</label>
-                            <input type="text" id="branchUser" placeholder="مثال: giza_admin" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-emerald-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-slate-400 mb-1">كلمة سر مدير الفرع</label>
-                            <input type="password" id="branchPass" placeholder="كلمة السر" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-emerald-500">
-                        </div>
-                        <div class="flex items-end gap-2">
-                            <button onclick="saveBranch()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-lg text-sm transition">حفظ الفرع</button>
-                            <button id="cancelBranchEditBtn" onclick="resetBranchForm()" class="hidden bg-slate-700 text-slate-300 font-bold py-2 px-3 rounded-lg text-sm">إلغاء</button>
-                        </div>
+            <!-- Tab 1: Employees -->
+            <div id="tabEmp" class="space-y-6">
+                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700">
+                    <h4 class="text-sm font-bold text-slate-200 mb-3">إضافة موظف جديد (سيتم حفظه في Google Sheets)</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                        <input type="text" id="empBranch" placeholder="اسم الفرع" class="bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white">
+                        <input type="text" id="empFullName" placeholder="الاسم الكامل" class="bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white">
+                        <input type="text" id="empJobTitle" placeholder="المسمى الوظيفي" class="bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white">
+                        <input type="text" id="empPin" maxlength="6" placeholder="رقم الـ PIN" class="bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white">
                     </div>
-                </div>
-
-                <div class="overflow-x-auto bg-slate-900 rounded-xl border border-slate-700">
-                    <table class="w-full text-right text-xs text-slate-300">
-                        <thead class="bg-slate-800 text-slate-200 border-b border-slate-700">
-                            <tr>
-                                <th class="p-3">اسم الفرع</th>
-                                <th class="p-3">حساب مدير الفرع</th>
-                                <th class="p-3">عدد الموظفين</th>
-                                <th class="p-3 text-center no-print">إجراءات</th>
-                            </tr>
-                        </thead>
-                        <tbody id="branchesTableBody"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Tab 1: Manage Employees -->
-            <div id="tabEmp" class="space-y-6 hidden">
-                <div class="bg-slate-900 border border-slate-700 p-4 rounded-xl no-print">
-                    <h4 id="formTitle" class="text-sm font-bold text-slate-200 mb-3"><i class="fa-solid fa-user-plus text-emerald-400 me-2"></i>إضافة موظف جديد</h4>
-                    <input type="hidden" id="editEmpId">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
-                        <div>
-                            <label class="block text-xs text-slate-400 mb-1">الفرع التابع له</label>
-                            <select id="empBranchSelect" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-emerald-500">
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs text-slate-400 mb-1">الاسم الكامل</label>
-                            <input type="text" id="empFullName" placeholder="أدخل الاسم الكامل" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-emerald-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-slate-400 mb-1">المسمى الوظيفي</label>
-                            <input type="text" id="empJobTitle" placeholder="أدخل المسمى الوظيفي" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-emerald-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-slate-400 mb-1">رقم البصمة (PIN)</label>
-                            <input type="text" id="empPin" maxlength="6" placeholder="أدخل رقم الـ PIN" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-emerald-500">
-                        </div>
-                        <div class="flex items-end gap-2">
-                            <button onclick="saveEmployee()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-lg text-sm transition">حفظ الموظف</button>
-                            <button id="cancelEditBtn" onclick="resetEmpForm()" class="hidden bg-slate-700 text-slate-300 font-bold py-2 px-3 rounded-lg text-sm">إلغاء</button>
-                        </div>
-                    </div>
+                    <button onclick="saveEmployeeToCloud()" class="mt-3 bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg text-sm">حفظ الموظف في الشيت</button>
                 </div>
 
                 <div class="overflow-x-auto bg-slate-900 rounded-xl border border-slate-700">
@@ -229,10 +134,8 @@
                             <tr>
                                 <th class="p-3">الفرع</th>
                                 <th class="p-3">الاسم الكامل</th>
-                                <th class="p-3">الاسم الصوتي</th>
                                 <th class="p-3">المسمى الوظيفي</th>
-                                <th class="p-3">رقم البصمة PIN</th>
-                                <th class="p-3 text-center no-print">إجراءات الحذف والتعديل</th>
+                                <th class="p-3">رقم البصمة (PIN)</th>
                             </tr>
                         </thead>
                         <tbody id="empTableBody"></tbody>
@@ -242,155 +145,64 @@
 
             <!-- Tab 2: Reports -->
             <div id="tabRep" class="space-y-6 hidden">
-                <div class="flex flex-wrap gap-3 items-center justify-between bg-slate-900 p-4 rounded-xl border border-slate-700 no-print">
-                    <div class="flex flex-wrap gap-3 items-center">
-                        <!-- Super Admin Branch Filter -->
-                        <div id="branchFilterContainer" class="flex gap-2 items-center">
-                            <span class="text-xs text-slate-400">تصفية حسب الفرع:</span>
-                            <select id="filterBranch" onchange="renderReports()" class="bg-slate-800 border border-slate-700 text-white text-xs rounded-lg p-2">
-                                <option value="ALL">جميع الفروع</option>
-                            </select>
-                        </div>
-                        <div class="flex gap-2 items-center">
-                            <span class="text-xs text-slate-400">تصفية حسب الموظف:</span>
-                            <select id="filterEmp" onchange="renderReports()" class="bg-slate-800 border border-slate-700 text-white text-xs rounded-lg p-2">
-                                <option value="ALL">جميع الموظفين</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="window.print()" class="bg-blue-700 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1">
-                            <i class="fa-solid fa-print"></i> طباعة التقرير بالصور
-                        </button>
-                        <button onclick="exportCSV()" class="bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1">
-                            <i class="fa-solid fa-file-excel"></i> تصدير Excel خفيف
-                        </button>
-                        <button id="clearLogsBtn" onclick="clearAllLogs()" class="bg-rose-800 hover:bg-rose-700 text-rose-200 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1 border border-rose-600">
-                            <i class="fa-solid fa-trash-can"></i> مسح سجلات الفرع
-                        </button>
-                    </div>
-                </div>
-
                 <div class="overflow-x-auto bg-slate-900 rounded-xl border border-slate-700">
                     <table class="w-full text-right text-xs text-slate-300">
                         <thead class="bg-slate-800 text-slate-200 border-b border-slate-700">
                             <tr>
-                                <th class="p-3">صورة البصمة</th>
                                 <th class="p-3">الفرع</th>
                                 <th class="p-3">اسم الموظف</th>
                                 <th class="p-3">التاريخ</th>
                                 <th class="p-3">وقت الدخول</th>
                                 <th class="p-3">وقت الخروج</th>
                                 <th class="p-3">حالة الشفت</th>
-                                <th class="p-3 text-center no-print">حذف السجل</th>
                             </tr>
                         </thead>
                         <tbody id="repTableBody"></tbody>
                     </table>
                 </div>
             </div>
-
         </div>
     </div>
-
-    <!-- Modal to View Employee Photo in Full Size -->
-    <div id="photoModal" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center hidden p-4" onclick="closePhotoModal()">
-        <div class="relative max-w-lg w-full bg-slate-800 p-2 rounded-2xl border border-slate-700 text-center" onclick="event.stopPropagation()">
-            <img id="modalImg" src="" class="w-full h-auto rounded-xl max-h-[75vh] object-contain mx-auto border border-slate-600">
-            <div id="modalCaption" class="mt-2 text-sm font-bold text-emerald-400"></div>
-            <button onclick="closePhotoModal()" class="mt-3 bg-slate-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold">إغلاق</button>
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="bg-slate-950 border-t border-slate-800 py-3 text-center text-xs text-slate-500">
-        جميع الحقوق محفوظة © مؤسسة بنك الخير للتنمية المستدامة
-    </footer>
 
     <!-- JavaScript App Logic -->
     <script>
-        const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbyZghIJqDWDwL38gMjTKW5gLi5W3T1nDk3JG9odWC_ELq_PelRAlgs4aVv9WdWi6af7/exec";
+        const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbx3jWvuqBzu-BHqwgpOVpZ7hvBtSntkN3HulV7NMbw7zujBVVPTDOea-_yIPFH4ZAb_/exec";
 
-        // Initial Storage Structures
-        let branches = JSON.parse(localStorage.getItem('bk_branches')) || [
-            { id: 'b1', name: 'الفرع الرئيسي', user: 'main', pass: '123456' }
-        ];
-
-        let employees = JSON.parse(localStorage.getItem('bk_employees')) || [];
-        let logs = JSON.parse(localStorage.getItem('bk_logs')) || [];
-
-        // Auth Sessions: 'SUPER' or Branch Object
-        let currentAuth = null; 
-
+        let cloudEmployees = [];
+        let cloudLogs = [];
         let currentPin = '';
         let detectedEmp = null;
-        let cameraStream = null;
-        let isCameraPreloaded = false;
 
-        function saveToStorage() {
-            localStorage.setItem('bk_branches', JSON.stringify(branches));
-            localStorage.setItem('bk_employees', JSON.stringify(employees));
-            localStorage.setItem('bk_logs', JSON.stringify(logs));
-        }
+        // التحميل التلقائي الفوري من شيت جوجل
+        async function loadCloudData() {
+            document.getElementById('camStatus').innerHTML = `<i class="fa-solid fa-sync animate-spin me-1"></i> جاري تحميل بيانات الموظفين...`;
+            try {
+                const res = await fetch(GOOGLE_SHEET_URL);
+                const data = await res.json();
+                
+                cloudEmployees = data.employees || [];
+                cloudLogs = data.logs || [];
 
-        function sendToGoogleSheets(logData) {
-            if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL.includes("ضع_رابط")) return;
-            fetch(GOOGLE_SHEET_URL, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(logData)
-            }).catch(err => console.log("Google Sheets sync status:", err));
+                document.getElementById('camStatus').innerHTML = `<i class="fa-solid fa-circle text-[8px] animate-pulse me-1"></i> الجهاز جاهز للبصمة (${cloudEmployees.length} موظف)`;
+                renderTables();
+            } catch (err) {
+                document.getElementById('camStatus').innerHTML = `❌ خطأ في الاتصال بشيت جوجل`;
+            }
         }
 
         function speak(text) {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'ar-SA';
-                utterance.rate = 0.85;
-                window.speechSynthesis.speak(utterance);
-            }
-        }
-
-        async function preloadCamera() {
-            if (isCameraPreloaded) return;
-            try {
-                cameraStream = await navigator.mediaDevices.getUserMedia({ video: { width: 300, height: 300, facingMode: 'user' } });
-                const video = document.getElementById('webcamVideo');
-                video.srcObject = cameraStream;
-                isCameraPreloaded = true;
-                document.getElementById('camStatus').innerHTML = `<i class="fa-solid fa-camera text-emerald-400 me-1"></i> الكاميرا جاهزة للالتقاط`;
-            } catch (err) {
-                console.warn('الكاميرا غير متاحة أو تم رفض الإذن:', err);
-            }
-        }
-
-        function captureInstantPhoto() {
-            if (!cameraStream) return null;
-            const video = document.getElementById('webcamVideo');
-            const canvas = document.getElementById('photoCanvas');
-            canvas.width = 240;
-            canvas.height = 240;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            return canvas.toDataURL('image/jpeg', 0.6);
-        }
-
-        function stopCamera() {
-            if (cameraStream) {
-                cameraStream.getTracks().forEach(track => track.stop());
-                cameraStream = null;
-                isCameraPreloaded = false;
-                document.getElementById('camStatus').innerHTML = `<i class="fa-solid fa-circle text-[8px] animate-pulse me-1"></i> الجهاز جاهز للبصمة`;
+                const u = new SpeechSynthesisUtterance(text);
+                u.lang = 'ar-SA';
+                window.speechSynthesis.speak(u);
             }
         }
 
         function pressNum(num) {
-            preloadCamera();
             if (currentPin.length < 6) {
                 currentPin += num;
-                updatePinDisplay();
+                document.getElementById('pinDisplay').value = currentPin;
                 checkPinAuto();
             }
         }
@@ -398,33 +210,25 @@
         function clearPin() {
             currentPin = '';
             detectedEmp = null;
-            updatePinDisplay();
+            document.getElementById('pinDisplay').value = '';
             document.getElementById('welcomeCard').classList.add('hidden');
             document.getElementById('statusMsg').innerText = '';
-            stopCamera();
         }
 
         function backspacePin() {
             currentPin = currentPin.slice(0, -1);
-            updatePinDisplay();
+            document.getElementById('pinDisplay').value = currentPin;
             checkPinAuto();
         }
 
-        function updatePinDisplay() {
-            document.getElementById('pinDisplay').value = currentPin;
-        }
-
         function checkPinAuto() {
-            detectedEmp = employees.find(e => e.pin === currentPin);
+            detectedEmp = cloudEmployees.find(e => String(e.pin).trim() === String(currentPin).trim());
             if (detectedEmp) {
-                const empBranch = branches.find(b => b.id === detectedEmp.branchId);
-                const branchName = empBranch ? empBranch.name : 'الفرع الرئيسي';
-                
                 document.getElementById('welcomeName').innerText = detectedEmp.fullName;
                 document.getElementById('welcomeTitle').innerText = detectedEmp.title;
-                document.getElementById('welcomeBranch').innerText = `📍 ${branchName}`;
+                document.getElementById('welcomeBranch').innerText = `📍 ${detectedEmp.branchName}`;
                 document.getElementById('welcomeCard').classList.remove('hidden');
-                speak(`مرحباً بك في نظام البصمة الإلكترونية لمؤسسة بنك الخير يا ${detectedEmp.firstName}`);
+                speak(`مرحباً بك يا ${detectedEmp.fullName.split(' ')[0]}`);
             } else {
                 document.getElementById('welcomeCard').classList.add('hidden');
             }
@@ -432,496 +236,138 @@
 
         function handleAttendance(type) {
             if (!detectedEmp) {
-                document.getElementById('statusMsg').innerText = '❌ البرجاء إدخال رقم سري صحيح أولاً';
+                document.getElementById('statusMsg').innerText = '❌ الرقم السري غير صحيح أو غير مسجل في الشيت';
                 speak('الرقم السري غير صحيح');
                 return;
             }
 
-            const photoData = captureInstantPhoto();
             const now = new Date();
             const dateStr = now.toISOString().split('T')[0];
             const timeStr = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
 
-            const empBranch = branches.find(b => b.id === detectedEmp.branchId);
-            const branchName = empBranch ? empBranch.name : 'الفرع الرئيسي';
+            const payload = {
+                branchName: detectedEmp.branchName,
+                empName: detectedEmp.fullName,
+                date: dateStr,
+                inTime: type === 'IN' ? timeStr : '--',
+                outTime: type === 'OUT' ? timeStr : '--',
+                status: type === 'IN' ? 'حضور' : 'انصراف'
+            };
 
-            let currentLog = null;
+            // إرسال لشيت جوجل فوراً
+            fetch(GOOGLE_SHEET_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
 
             if (type === 'IN') {
-                currentLog = { 
-                    id: Date.now(), 
-                    empId: detectedEmp.id, 
-                    empName: detectedEmp.fullName, 
-                    branchId: detectedEmp.branchId,
-                    branchName: branchName,
-                    date: dateStr, 
-                    inTime: timeStr, 
-                    outTime: null, 
-                    photo: photoData, 
-                    status: 'حضور' 
-                };
-                logs.push(currentLog);
-                speak(`تم تسجيل حضورك بنجاح يا ${detectedEmp.firstName}، نتمنى لك يوماً موفقاً`);
-                document.getElementById('statusMsg').innerText = `🟢 تم تسجيل دخول: ${detectedEmp.fullName} (${timeStr})`;
+                speak(`تم تسجيل حضورك بنجاح يا ${detectedEmp.fullName.split(' ')[0]}`);
+                document.getElementById('statusMsg').innerText = `🟢 تم تسجيل دخول: ${detectedEmp.fullName}`;
             } else {
-                let lastLog = logs.slice().reverse().find(l => l.empId === detectedEmp.id && !l.outTime);
-                if (lastLog) {
-                    lastLog.outTime = timeStr;
-                    lastLog.status = 'مكتمل';
-                    if (photoData) lastLog.photo = photoData;
-                    currentLog = lastLog;
-                } else {
-                    currentLog = { 
-                        id: Date.now(), 
-                        empId: detectedEmp.id, 
-                        empName: detectedEmp.fullName, 
-                        branchId: detectedEmp.branchId,
-                        branchName: branchName,
-                        date: dateStr, 
-                        inTime: '--', 
-                        outTime: timeStr, 
-                        photo: photoData, 
-                        status: 'انصراف' 
-                    };
-                    logs.push(currentLog);
-                }
-                speak(`تم تسجيل خروجك بنجاح يا ${detectedEmp.firstName}، شكراً لك ومع السلامة`);
-                document.getElementById('statusMsg').innerText = `🔴 تم تسجيل خروج: ${detectedEmp.fullName} (${timeStr})`;
+                speak(`تم تسجيل خروجك بنجاح يا ${detectedEmp.fullName.split(' ')[0]}`);
+                document.getElementById('statusMsg').innerText = `🔴 تم تسجيل خروج: ${detectedEmp.fullName}`;
             }
 
-            saveToStorage();
-            sendToGoogleSheets(currentLog);
-            setTimeout(clearPin, 2500);
+            setTimeout(clearPin, 2000);
+            setTimeout(loadCloudData, 3000); // تحديث القائمة بعد البصمة
         }
 
-        // Admin Auth & Roles
-        function toggleAdminModal() {
-            document.getElementById('adminModal').classList.toggle('hidden');
-        }
+        // إدراج موظف جديد لشيت جوجل مباشرة
+        async function saveEmployeeToCloud() {
+            const b = document.getElementById('empBranch').value.trim();
+            const n = document.getElementById('empFullName').value.trim();
+            const t = document.getElementById('empJobTitle').value.trim();
+            const p = document.getElementById('empPin').value.trim();
 
-        function loginAdmin() {
-            const u = document.getElementById('adminUser').value.trim().toLowerCase();
-            const p = document.getElementById('adminPass').value.trim();
-            
-            // Check Super Admin
-            if (u === 'admin' && p === '123456') {
-                currentAuth = 'SUPER';
-                setupDashboardForRole();
-                speak('أهلاً بك يا مدير النظام العام في لوحة التحكم');
+            if (!b || !n || !p) {
+                alert('يرجى كتابة الفرع والاسم ورقم الـ PIN');
                 return;
             }
 
-            // Check Branch Managers
-            const foundBranch = branches.find(b => b.user.toLowerCase() === u && b.pass === p);
-            if (foundBranch) {
-                currentAuth = foundBranch;
-                setupDashboardForRole();
-                speak(`أهلاً بك يا مدير ${foundBranch.name} في لوحة التحكم`);
-                return;
-            }
+            const payload = {
+                action: 'ADD_EMP',
+                branchName: b,
+                fullName: n,
+                title: t || 'موظف',
+                pin: p
+            };
 
-            document.getElementById('adminLoginErr').classList.remove('hidden');
-            speak('اسم المستخدم أو كلمة السر غير صحيحة');
-        }
-
-        function setupDashboardForRole() {
-            document.getElementById('adminLoginForm').classList.add('hidden');
-            document.getElementById('adminDashboard').classList.remove('hidden');
-            document.getElementById('adminLoginErr').classList.add('hidden');
-            document.getElementById('adminUser').value = '';
-            document.getElementById('adminPass').value = '';
-
-            const tabBranchesBtn = document.getElementById('tabBranchesBtn');
-            const branchFilterContainer = document.getElementById('branchFilterContainer');
-
-            if (currentAuth === 'SUPER') {
-                document.getElementById('dashHeaderTitle').innerHTML = `<i class="fa-solid fa-user-gear"></i> لوحة الإدارة العامة للمؤسسة`;
-                document.getElementById('dashHeaderSub').innerText = `إدارة جميع الفروع والمديرين والموظفين والتقارير الشاملة`;
-                tabBranchesBtn.classList.remove('hidden');
-                branchFilterContainer.classList.remove('hidden');
-                switchAdminTab('branches');
-            } else {
-                document.getElementById('dashHeaderTitle').innerHTML = `<i class="fa-solid fa-building-user"></i> لوحة إدارة: ${currentAuth.name}`;
-                document.getElementById('dashHeaderSub').innerText = `إدارة موظفي وسجلات تقارير ${currentAuth.name} فقط`;
-                tabBranchesBtn.classList.add('hidden');
-                branchFilterContainer.classList.add('hidden');
-                switchAdminTab('emp');
-            }
-
-            populateBranchSelects();
-            renderBranchesTable();
-            renderEmpTable();
-            renderReports();
-        }
-
-        function logoutAdmin() {
-            currentAuth = null;
-            document.getElementById('adminDashboard').classList.add('hidden');
-            document.getElementById('adminLoginForm').classList.remove('hidden');
-            toggleAdminModal();
-            speak('تم تسجيل الخروج بنجاح');
-        }
-
-        function switchAdminTab(tab) {
-            const tabB = document.getElementById('tabBranches');
-            const tabE = document.getElementById('tabEmp');
-            const tabR = document.getElementById('tabRep');
-
-            const btnB = document.getElementById('tabBranchesBtn');
-            const btnE = document.getElementById('tabEmpBtn');
-            const btnR = document.getElementById('tabRepBtn');
-
-            tabB.classList.add('hidden');
-            tabE.classList.add('hidden');
-            tabR.classList.add('hidden');
-
-            btnB.className = "px-4 py-2 font-bold text-sm text-slate-400 hover:text-white whitespace-nowrap";
-            btnE.className = "px-4 py-2 font-bold text-sm text-slate-400 hover:text-white whitespace-nowrap";
-            btnR.className = "px-4 py-2 font-bold text-sm text-slate-400 hover:text-white whitespace-nowrap";
-
-            if (tab === 'branches') {
-                tabB.classList.remove('hidden');
-                btnB.className = "px-4 py-2 font-bold text-sm border-b-2 border-emerald-500 text-emerald-400 whitespace-nowrap";
-                renderBranchesTable();
-            } else if (tab === 'emp') {
-                tabE.classList.remove('hidden');
-                btnE.className = "px-4 py-2 font-bold text-sm border-b-2 border-emerald-500 text-emerald-400 whitespace-nowrap";
-                renderEmpTable();
-            } else {
-                tabR.classList.remove('hidden');
-                btnR.className = "px-4 py-2 font-bold text-sm border-b-2 border-emerald-500 text-emerald-400 whitespace-nowrap";
-                renderReports();
-            }
-        }
-
-        // Branch Management Functions
-        function renderBranchesTable() {
-            const tbody = document.getElementById('branchesTableBody');
-            tbody.innerHTML = '';
-
-            if (branches.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500 italic">لا توجد فروع مضافة حتى الآن.</td></tr>`;
-                return;
-            }
-
-            branches.forEach(b => {
-                const empCount = employees.filter(e => e.branchId === b.id).length;
-                tbody.innerHTML += `
-                    <tr class="border-b border-slate-800 hover:bg-slate-800/50">
-                        <td class="p-3 font-bold text-emerald-400">${b.name}</td>
-                        <td class="p-3 font-mono text-slate-300">${b.user}</td>
-                        <td class="p-3 font-bold text-amber-400">${empCount} موظف</td>
-                        <td class="p-3 text-center no-print">
-                            <button onclick="editBranch('${b.id}')" class="text-amber-400 hover:text-amber-300 me-3 bg-amber-950/60 p-1.5 rounded-lg border border-amber-800"><i class="fa-solid fa-pen"></i> تعديل</button>
-                            <button onclick="deleteBranch('${b.id}')" class="text-rose-400 hover:text-rose-300 bg-rose-950/60 p-1.5 rounded-lg border border-rose-800"><i class="fa-solid fa-trash"></i> حذف الفرع</button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        function saveBranch() {
-            const name = document.getElementById('branchName').value.trim();
-            const user = document.getElementById('branchUser').value.trim();
-            const pass = document.getElementById('branchPass').value.trim();
-            const editId = document.getElementById('editBranchId').value;
-
-            if (!name || !user || !pass) {
-                alert('يرجى كتابة اسم الفرع واسم المستخدم وكلمة السر للمدير');
-                return;
-            }
-
-            if (editId) {
-                let b = branches.find(item => item.id === editId);
-                if (b) {
-                    b.name = name;
-                    b.user = user;
-                    b.pass = pass;
-                }
-            } else {
-                branches.push({ id: 'b_' + Date.now(), name: name, user: user, pass: pass });
-            }
-
-            saveToStorage();
-            resetBranchForm();
-            populateBranchSelects();
-            renderBranchesTable();
-        }
-
-        function editBranch(id) {
-            const b = branches.find(item => item.id === id);
-            if (b) {
-                document.getElementById('editBranchId').value = b.id;
-                document.getElementById('branchName').value = b.name;
-                document.getElementById('branchUser').value = b.user;
-                document.getElementById('branchPass').value = b.pass;
-                document.getElementById('branchFormTitle').innerText = 'تعديل بيانات فرع';
-                document.getElementById('cancelBranchEditBtn').classList.remove('hidden');
-            }
-        }
-
-        function resetBranchForm() {
-            document.getElementById('editBranchId').value = '';
-            document.getElementById('branchName').value = '';
-            document.getElementById('branchUser').value = '';
-            document.getElementById('branchPass').value = '';
-            document.getElementById('branchFormTitle').innerText = 'إضافة فرع جديد ومدير فرع';
-            document.getElementById('cancelBranchEditBtn').classList.add('hidden');
-        }
-
-        function deleteBranch(id) {
-            const b = branches.find(item => item.id === id);
-            if (!b) return;
-
-            if (confirm(`⚠️ تحذير: هل أنت متأكد من حذف (${b.name})؟ سيتم إلغاء صلاحيات مديره أيضاً.`)) {
-                branches = branches.filter(item => item.id !== id);
-                saveToStorage();
-                populateBranchSelects();
-                renderBranchesTable();
-            }
-        }
-
-        function populateBranchSelects() {
-            const empSel = document.getElementById('empBranchSelect');
-            const filterB = document.getElementById('filterBranch');
-
-            empSel.innerHTML = '';
-            filterB.innerHTML = '<option value="ALL">جميع الفروع</option>';
-
-            branches.forEach(b => {
-                empSel.innerHTML += `<option value="${b.id}">${b.name}</option>`;
-                filterB.innerHTML += `<option value="${b.id}">${b.name}</option>`;
+            await fetch(GOOGLE_SHEET_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
             });
 
-            if (currentAuth && currentAuth !== 'SUPER') {
-                empSel.value = currentAuth.id;
-                empSel.disabled = true;
-            } else {
-                empSel.disabled = false;
-            }
-        }
-
-        // Employee Management
-        function renderEmpTable() {
-            const tbody = document.getElementById('empTableBody');
-            tbody.innerHTML = '';
-            
-            let filteredEmps = employees;
-            if (currentAuth && currentAuth !== 'SUPER') {
-                filteredEmps = employees.filter(e => e.branchId === currentAuth.id);
-            }
-
-            if (filteredEmps.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500 italic">لا يوجد موظفين مسجلين في هذا الفرع حالياً.</td></tr>`;
-                return;
-            }
-
-            filteredEmps.forEach(e => {
-                const b = branches.find(item => item.id === e.branchId);
-                const bName = b ? b.name : 'فرع غير معروف';
-
-                tbody.innerHTML += `
-                    <tr class="border-b border-slate-800 hover:bg-slate-800/50">
-                        <td class="p-3 font-bold text-amber-400">${bName}</td>
-                        <td class="p-3 font-bold text-white">${e.fullName}</td>
-                        <td class="p-3 text-emerald-400">${e.firstName}</td>
-                        <td class="p-3">${e.title}</td>
-                        <td class="p-3 font-mono">${e.pin}</td>
-                        <td class="p-3 text-center no-print">
-                            <button onclick="editEmployee('${e.id}')" title="تعديل الموظف" class="text-amber-400 hover:text-amber-300 me-3 bg-amber-950/60 p-1.5 rounded-lg border border-amber-800"><i class="fa-solid fa-pen"></i> تعديل</button>
-                            <button onclick="deleteEmployee('${e.id}')" title="حذف الموظف" class="text-rose-400 hover:text-rose-300 bg-rose-950/60 p-1.5 rounded-lg border border-rose-800"><i class="fa-solid fa-trash"></i> حذف الموظف</button>
-                        </td>
-                    </tr>
-                `;
-            });
-
-            const sel = document.getElementById('filterEmp');
-            sel.innerHTML = '<option value="ALL">جميع الموظفين</option>';
-            filteredEmps.forEach(e => {
-                sel.innerHTML += `<option value="${e.id}">${e.fullName}</option>`;
-            });
-        }
-
-        function saveEmployee() {
-            const branchId = document.getElementById('empBranchSelect').value;
-            const name = document.getElementById('empFullName').value.trim();
-            const title = document.getElementById('empJobTitle').value.trim();
-            const pin = document.getElementById('empPin').value.trim();
-            const editId = document.getElementById('editEmpId').value;
-
-            if (!branchId || !name || !pin) {
-                alert('يرجى التأكد من اختيار الفرع وكتابة الاسم ورقم البصمة');
-                return;
-            }
-
-            const firstName = name.split(' ')[0];
-
-            if (editId) {
-                let emp = employees.find(e => e.id === editId);
-                if (emp) {
-                    emp.branchId = branchId;
-                    emp.fullName = name;
-                    emp.firstName = firstName;
-                    emp.title = title;
-                    emp.pin = pin;
-                }
-            } else {
-                employees.push({ id: Date.now().toString(), branchId: branchId, fullName: name, firstName: firstName, title: title, pin: pin });
-            }
-
-            saveToStorage();
-            resetEmpForm();
-            renderEmpTable();
-        }
-
-        function editEmployee(id) {
-            const emp = employees.find(e => e.id === id);
-            if (emp) {
-                document.getElementById('editEmpId').value = emp.id;
-                document.getElementById('empBranchSelect').value = emp.branchId;
-                document.getElementById('empFullName').value = emp.fullName;
-                document.getElementById('empJobTitle').value = emp.title;
-                document.getElementById('empPin').value = emp.pin;
-                document.getElementById('formTitle').innerText = 'تعديل بيانات موظف';
-                document.getElementById('cancelEditBtn').classList.remove('hidden');
-            }
-        }
-
-        function resetEmpForm() {
-            document.getElementById('editEmpId').value = '';
+            alert('تمت إضافة الموظف بنجاح إلى Google Sheets!');
+            document.getElementById('empBranch').value = '';
             document.getElementById('empFullName').value = '';
             document.getElementById('empJobTitle').value = '';
             document.getElementById('empPin').value = '';
-            document.getElementById('formTitle').innerText = 'إضافة موظف جديد';
-            document.getElementById('cancelEditBtn').classList.add('hidden');
+
+            setTimeout(loadCloudData, 2000); // إعادة تحميل القائمة
         }
 
-        function deleteEmployee(id) {
-            const emp = employees.find(e => e.id === id);
-            if (!emp) return;
-
-            if (confirm(`هل أنت متأكد من حذف الموظف (${emp.fullName}) نهائياً من النظام؟`)) {
-                employees = employees.filter(e => e.id !== id);
-                saveToStorage();
-                renderEmpTable();
-            }
-        }
-
-        // Reports Management
-        function renderReports() {
-            const selectedBranch = currentAuth === 'SUPER' ? document.getElementById('filterBranch').value : currentAuth.id;
-            const selectedEmp = document.getElementById('filterEmp').value;
-            const tbody = document.getElementById('repTableBody');
-            tbody.innerHTML = '';
-
-            let filtered = logs;
-
-            if (selectedBranch !== 'ALL') {
-                filtered = filtered.filter(l => l.branchId === selectedBranch);
-            }
-
-            if (selectedEmp !== 'ALL') {
-                filtered = filtered.filter(l => l.empId === selectedEmp);
-            }
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-500 italic">لا توجد سجلات حضور مسجلة لهذا التصفية.</td></tr>`;
-                return;
-            }
-
-            filtered.slice().reverse().forEach(l => {
-                const imgTag = l.photo 
-                    ? `<img src="${l.photo}" onclick="openPhotoModal('${l.photo}', '${l.empName}')" class="w-10 h-10 object-cover rounded-lg border border-emerald-500/50 cursor-pointer hover:scale-110 transition emp-photo-print">`
-                    : `<span class="text-slate-500 italic">بدون صورة</span>`;
-
-                tbody.innerHTML += `
+        function renderTables() {
+            // الموظفين
+            const empBody = document.getElementById('empTableBody');
+            empBody.innerHTML = '';
+            cloudEmployees.forEach(e => {
+                empBody.innerHTML += `
                     <tr class="border-b border-slate-800">
-                        <td class="p-2">${imgTag}</td>
-                        <td class="p-3 font-bold text-amber-400">${l.branchName || 'الفرع الرئيسي'}</td>
+                        <td class="p-3 font-bold text-amber-400">${e.branchName}</td>
+                        <td class="p-3 font-bold text-white">${e.fullName}</td>
+                        <td class="p-3">${e.title}</td>
+                        <td class="p-3 font-mono text-emerald-400">${e.pin}</td>
+                    </tr>
+                `;
+            });
+
+            // التقارير
+            const repBody = document.getElementById('repTableBody');
+            repBody.innerHTML = '';
+            cloudLogs.slice().reverse().forEach(l => {
+                repBody.innerHTML += `
+                    <tr class="border-b border-slate-800">
+                        <td class="p-3 font-bold text-amber-400">${l.branchName}</td>
                         <td class="p-3 font-bold text-white">${l.empName}</td>
                         <td class="p-3">${l.date}</td>
-                        <td class="p-3 text-emerald-400">${l.inTime || '--'}</td>
-                        <td class="p-3 text-rose-400">${l.outTime || '--'}</td>
-                        <td class="p-3">${l.inTime && l.outTime ? '<span class="text-emerald-400">مكتمل</span>' : '<span class="text-amber-400">قيد الشفت</span>'}</td>
-                        <td class="p-3 text-center no-print">
-                            <button onclick="deleteSingleLog(${l.id})" title="حذف هذا السجل" class="text-rose-400 hover:text-rose-300 bg-rose-950/60 px-2 py-1 rounded border border-rose-800">
-                                <i class="fa-solid fa-trash-can"></i> حذف
-                            </button>
-                        </td>
+                        <td class="p-3 text-emerald-400">${l.inTime}</td>
+                        <td class="p-3 text-rose-400">${l.outTime}</td>
+                        <td class="p-3">${l.status}</td>
                     </tr>
                 `;
             });
         }
 
-        function openPhotoModal(src, name) {
-            document.getElementById('modalImg').src = src;
-            document.getElementById('modalCaption').innerText = `صورة بصمة: ${name}`;
-            document.getElementById('photoModal').classList.remove('hidden');
+        function toggleAdminModal() { document.getElementById('adminModal').classList.toggle('hidden'); }
+        function loginAdmin() {
+            const u = document.getElementById('adminUser').value;
+            const p = document.getElementById('adminPass').value;
+            if (u === 'admin' && p === '123456') {
+                document.getElementById('adminLoginForm').classList.add('hidden');
+                document.getElementById('adminDashboard').classList.remove('hidden');
+            } else { alert('خطأ في كلمة السر'); }
         }
-
-        function closePhotoModal() {
-            document.getElementById('photoModal').classList.add('hidden');
+        function logoutAdmin() {
+            document.getElementById('adminDashboard').classList.add('hidden');
+            document.getElementById('adminLoginForm').classList.remove('hidden');
+            toggleAdminModal();
         }
-
-        function deleteSingleLog(logId) {
-            if (confirm('هل أنت متأكد من حذف هذا السجل المحدد؟')) {
-                logs = logs.filter(l => l.id !== logId);
-                saveToStorage();
-                renderReports();
-            }
-        }
-
-        // Smart Branch-isolated Clear Logs Function
-        function clearAllLogs() {
-            if (currentAuth === 'SUPER') {
-                const selectedBranch = document.getElementById('filterBranch').value;
-                if (selectedBranch === 'ALL') {
-                    if (confirm('⚠️ تحذير الإدارة العامة: هل أنت متأكد من مسح جميع سجلات الحضور لكل الفروع؟')) {
-                        logs = [];
-                        saveToStorage();
-                        renderReports();
-                    }
-                } else {
-                    const bObj = branches.find(b => b.id === selectedBranch);
-                    const bName = bObj ? bObj.name : 'الفرع المحدد';
-                    if (confirm(`⚠️ تحذير: هل أنت متأكد من مسح جميع سجلات (${bName}) فقط؟`)) {
-                        logs = logs.filter(l => l.branchId !== selectedBranch);
-                        saveToStorage();
-                        renderReports();
-                    }
-                }
+        function switchTab(tab) {
+            if (tab === 'emp') {
+                document.getElementById('tabEmp').classList.remove('hidden');
+                document.getElementById('tabRep').classList.add('hidden');
+                document.getElementById('tabEmpBtn').className = "px-4 py-2 font-bold text-sm text-emerald-400 border-b-2 border-emerald-500";
+                document.getElementById('tabRepBtn').className = "px-4 py-2 font-bold text-sm text-slate-400";
             } else {
-                if (confirm(`⚠️ هل أنت متأكد من مسح جميع سجلات الحضور الخاصة بـ (${currentAuth.name}) فقط؟`)) {
-                    logs = logs.filter(l => l.branchId !== currentAuth.id);
-                    saveToStorage();
-                    renderReports();
-                }
+                document.getElementById('tabEmp').classList.add('hidden');
+                document.getElementById('tabRep').classList.remove('hidden');
+                document.getElementById('tabRepBtn').className = "px-4 py-2 font-bold text-sm text-emerald-400 border-b-2 border-emerald-500";
+                document.getElementById('tabEmpBtn').className = "px-4 py-2 font-bold text-sm text-slate-400";
             }
-        }
-
-        function exportCSV() {
-            let csv = 'الفرع,اسم الموظف,التاريخ,وقت الدخول,وقت الخروج,الحالة\n';
-            
-            let exportData = logs;
-            if (currentAuth && currentAuth !== 'SUPER') {
-                exportData = logs.filter(l => l.branchId === currentAuth.id);
-            } else {
-                const selectedBranch = document.getElementById('filterBranch').value;
-                if (selectedBranch !== 'ALL') {
-                    exportData = logs.filter(l => l.branchId === selectedBranch);
-                }
-            }
-
-            exportData.forEach(l => {
-                const status = (l.inTime && l.outTime) ? 'مكتمل' : 'قيد الشفت';
-                csv += `"${l.branchName || 'الفرع الرئيسي'}","${l.empName}","${l.date}","${l.inTime || '--'}","${l.outTime || '--'}","${status}"\n`;
-            });
-
-            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'تقرير_حضور_وانصراف_فروع_بنك_الخير.csv';
-            link.click();
         }
     </script>
 </body>
