@@ -40,10 +40,9 @@
     <main id="employeeSection" class="flex-1 flex flex-col items-center justify-center p-4">
         <div class="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-md text-center">
             
-            <!-- Message Display Header -->
             <div class="mb-4">
                 <span id="camStatus" class="inline-block px-3 py-1 bg-emerald-950 text-emerald-400 text-xs font-semibold rounded-full border border-emerald-800 mb-2">
-                    <i class="fa-solid fa-sync animate-spin me-1"></i> جاري مزامنة الموظفين من الشيت...
+                    <i class="fa-solid fa-sync animate-spin me-1"></i> جاري مزامنة البيانات...
                 </span>
                 <h2 id="deviceWelcomeText" class="text-xl font-bold text-slate-100">أهلاً بك! سجّل رقمك السري (PIN)</h2>
                 <p class="text-xs text-slate-400 mt-1">جهاز البصمة الإلكتروني جاهز للاستخدام</p>
@@ -100,7 +99,7 @@
                 <button onclick="toggleAdminModal()" class="text-slate-400"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <div class="space-y-4">
-                <input type="text" id="adminUser" placeholder="اسم المستخدم" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-sm">
+                <input type="text" id="adminUser" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="اسم المستخدم" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-sm">
                 <input type="password" id="adminPass" placeholder="كلمة السر" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-sm">
                 <button onclick="loginAdmin()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg">دخول</button>
             </div>
@@ -108,12 +107,16 @@
 
         <div id="adminDashboard" class="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-5xl max-h-[90vh] overflow-y-auto hidden">
             <div class="flex justify-between items-center pb-4 border-b border-slate-700 mb-6">
-                <h3 class="text-xl font-bold text-emerald-400">لوحة الإدارة الموحدة</h3>
+                <div>
+                    <h3 class="text-xl font-bold text-emerald-400">لوحة الإدارة الموحدة</h3>
+                    <p id="loggedAdminBadge" class="text-xs text-amber-300 font-bold mt-1"></p>
+                </div>
                 <button onclick="logoutAdmin()" class="bg-rose-900/60 text-rose-200 px-3 py-1.5 rounded-lg text-xs font-bold">تسجيل الخروج</button>
             </div>
 
             <div class="flex border-b border-slate-700 mb-6">
                 <button id="tabEmpBtn" onclick="switchTab('emp')" class="px-4 py-2 font-bold text-sm text-emerald-400 border-b-2 border-emerald-500">إدارة الموظفين والفروع</button>
+                <button id="tabMgrBtn" onclick="switchTab('mgr')" class="px-4 py-2 font-bold text-sm text-slate-400">إضافة مدير فرع</button>
                 <button id="tabRepBtn" onclick="switchTab('rep')" class="px-4 py-2 font-bold text-sm text-slate-400">التقارير وسجلات الحضور</button>
             </div>
 
@@ -171,7 +174,46 @@
                 </div>
             </div>
 
-            <!-- Tab 2: Reports -->
+            <!-- Tab 2: Add Branch Manager -->
+            <div id="tabMgr" class="space-y-6 hidden">
+                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-4">
+                    <h4 class="text-sm font-bold text-amber-400">إضافة مدير فرع جديد (يتخزن في جوجل شيت فوراً)</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="text-xs text-slate-400 mb-1 block">اختر الفرع المسئول عنه:</label>
+                            <select id="mgrBranchSelect" class="bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-emerald-400 w-full focus:outline-none">
+                                <option value="الكل">الكل (مدير عام)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400 mb-1 block">اسم المستخدم (Username):</label>
+                            <input type="text" id="mgrUser" placeholder="اسم المستخدم" class="bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white w-full">
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400 mb-1 block">كلمة السر (Password):</label>
+                            <input type="text" id="mgrPass" placeholder="كلمة السر" class="bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white w-full">
+                        </div>
+                    </div>
+
+                    <button onclick="saveAdminToCloud()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 px-6 rounded-lg text-sm">حفظ المدير في الشيت</button>
+                </div>
+
+                <div class="overflow-x-auto bg-slate-900 rounded-xl border border-slate-700">
+                    <h5 class="p-3 bg-slate-800 font-bold text-xs text-slate-200 border-b border-slate-700">قائمة المديرين المسجلين بالشيت</h5>
+                    <table class="w-full text-right text-xs text-slate-300">
+                        <thead class="bg-slate-800 text-slate-400 border-b border-slate-700">
+                            <tr>
+                                <th class="p-3">الفرع المسئول</th>
+                                <th class="p-3">اسم المستخدم</th>
+                                <th class="p-3">كلمة السر</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mgrTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab 3: Reports -->
             <div id="tabRep" class="space-y-6 hidden">
                 <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div class="flex items-center gap-3 w-full sm:w-auto">
@@ -204,12 +246,14 @@
 
     <!-- JavaScript App Logic -->
     <script>
-        const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbx3jWvuqBzu-BHqwgpOVpZ7hvBtSntkN3HulV7NMbw7zujBVVPTDOea-_yIPFH4ZAb_/exec";
+        const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbzv4s5UvViX10aH_u_4zLNXPbdvzRhQb2hAX3lTEeqXYcapavdyrhfU98LFUm-wKNmf/exec";
 
         let cloudEmployees = [];
         let cloudLogs = [];
+        let cloudAdmins = [];
         let currentPin = '';
         let detectedEmp = null;
+        let currentLoggedAdmin = null;
 
         async function loadCloudData() {
             document.getElementById('camStatus').innerHTML = `<i class="fa-solid fa-sync animate-spin me-1"></i> جاري مزامنة البيانات...`;
@@ -219,8 +263,9 @@
                 
                 cloudEmployees = data.employees || [];
                 cloudLogs = data.logs || [];
+                cloudAdmins = data.admins || [];
 
-                document.getElementById('camStatus').innerHTML = `<i class="fa-solid fa-circle text-[8px] animate-pulse me-1"></i> الجهاز متصل سحابياً (${cloudEmployees.length} موظف)`;
+                document.getElementById('camStatus').innerHTML = `<i class="fa-solid fa-circle text-[8px] animate-pulse me-1"></i> الجهاز متصل سحابياً`;
                 
                 updateBranchDropdowns();
                 renderTables();
@@ -232,6 +277,7 @@
         function updateBranchDropdowns() {
             const filterSelect = document.getElementById('branchFilter');
             const empBranchSelect = document.getElementById('empBranchSelect');
+            const mgrBranchSelect = document.getElementById('mgrBranchSelect');
             
             const currentSelected = empBranchSelect.value;
             const branches = new Set(['الفرع الرئيسي']);
@@ -240,10 +286,12 @@
 
             filterSelect.innerHTML = '<option value="ALL">كل الفروع</option>';
             empBranchSelect.innerHTML = '';
+            if (mgrBranchSelect) mgrBranchSelect.innerHTML = '<option value="الكل">الكل (مدير عام)</option>';
 
             branches.forEach(b => {
                 filterSelect.innerHTML += `<option value="${b}">${b}</option>`;
                 empBranchSelect.innerHTML += `<option value="${b}">${b}</option>`;
+                if (mgrBranchSelect) mgrBranchSelect.innerHTML += `<option value="${b}">${b}</option>`;
             });
 
             if (currentSelected) empBranchSelect.value = currentSelected;
@@ -318,6 +366,28 @@
             const dateStr = now.toISOString().split('T')[0];
             const timeStr = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
 
+            // الفحص والتأكد من عدم التكرار (منع دخول مرتين متتاليتين أو خروج مرتين متتاليتين)
+            const empLogsToday = cloudLogs.filter(l => 
+                l.empName === detectedEmp.fullName && 
+                l.date === dateStr
+            );
+
+            const lastLog = empLogsToday.length > 0 ? empLogsToday[empLogsToday.length - 1] : null;
+
+            if (type === 'IN') {
+                if (lastLog && lastLog.status === 'حضور') {
+                    document.getElementById('statusMsg').innerText = `⚠️ ${detectedEmp.fullName} مسجل دخول بالفعل! يجب تسجيل الخروج أولاً.`;
+                    speak('أنت مسجل دخول بالفعل');
+                    return;
+                }
+            } else if (type === 'OUT') {
+                if (!lastLog || lastLog.status === 'انصراف') {
+                    document.getElementById('statusMsg').innerText = `⚠️ ${detectedEmp.fullName} غير مسجل دخول اليوم! يجب تسجيل الدخول أولاً.`;
+                    speak('يجب تسجيل الدخول أولاً');
+                    return;
+                }
+            }
+
             const payload = {
                 branchName: detectedEmp.branchName,
                 empName: detectedEmp.fullName,
@@ -377,6 +447,37 @@
             setTimeout(loadCloudData, 2000);
         }
 
+        async function saveAdminToCloud() {
+            const b = document.getElementById('mgrBranchSelect').value;
+            const u = document.getElementById('mgrUser').value.trim();
+            const p = document.getElementById('mgrPass').value.trim();
+
+            if (!u || !p) {
+                alert('يرجى كتابة اسم المستخدم وكلمة السر للمدير');
+                return;
+            }
+
+            const payload = {
+                action: 'ADD_ADMIN',
+                branch: b,
+                username: u,
+                password: p
+            };
+
+            await fetch(GOOGLE_SHEET_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            alert(`تم إضافة المدير (${u}) بنجاح وإرساله للشيت!`);
+            document.getElementById('mgrUser').value = '';
+            document.getElementById('mgrPass').value = '';
+
+            setTimeout(loadCloudData, 2000);
+        }
+
         function editEmployee(index) {
             const emp = cloudEmployees[index];
             document.getElementById('empBranchSelect').value = emp.branchName;
@@ -408,9 +509,7 @@
         }
 
         function renderTables() {
-            const selectedBranch = document.getElementById('branchFilter').value;
-
-            // جدول الموظفين
+            // 1. جدول الموظفين
             const empBody = document.getElementById('empTableBody');
             empBody.innerHTML = '';
             cloudEmployees.forEach((e, idx) => {
@@ -428,7 +527,23 @@
                 `;
             });
 
-            // جدول التقارير
+            // 2. جدول المديرين
+            const mgrBody = document.getElementById('mgrTableBody');
+            if (mgrBody) {
+                mgrBody.innerHTML = '';
+                cloudAdmins.forEach(a => {
+                    mgrBody.innerHTML += `
+                        <tr class="border-b border-slate-800">
+                            <td class="p-3 font-bold text-amber-400">${a.branch}</td>
+                            <td class="p-3 font-bold text-emerald-400">${a.username}</td>
+                            <td class="p-3 font-mono text-slate-300">${a.password}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            // 3. جدول التقارير
+            const selectedBranch = document.getElementById('branchFilter').value;
             const repBody = document.getElementById('repTableBody');
             repBody.innerHTML = '';
 
@@ -456,16 +571,31 @@
         function toggleAdminModal() { document.getElementById('adminModal').classList.toggle('hidden'); }
         
         function loginAdmin() {
-            const u = document.getElementById('adminUser').value;
-            const p = document.getElementById('adminPass').value;
-            if (u === 'admin' && p === '123456') {
+            const u = document.getElementById('adminUser').value.trim();
+            const p = document.getElementById('adminPass').value.trim();
+
+            // البحث في قائمة المديرين القادمة من شيت جوجل
+            const foundAdmin = cloudAdmins.find(a => String(a.username).trim() === u && String(a.password).trim() === p);
+
+            if (foundAdmin) {
+                currentLoggedAdmin = foundAdmin;
                 document.getElementById('adminLoginForm').classList.add('hidden');
                 document.getElementById('adminDashboard').classList.remove('hidden');
                 
-                // الترحيب الصوتي بالمدير
-                speak('مرحباً بك يا مدير النظام');
+                document.getElementById('loggedAdminBadge').innerText = `المستخدم الحالي: ${foundAdmin.username} (${foundAdmin.branch === 'الكل' ? 'مدير عام' : 'مدير ' + foundAdmin.branch})`;
+
+                const branchFilter = document.getElementById('branchFilter');
+                if (foundAdmin.branch !== 'الكل') {
+                    branchFilter.value = foundAdmin.branch;
+                    branchFilter.disabled = true;
+                } else {
+                    branchFilter.disabled = false;
+                }
+
+                renderTables();
+                speak(`مرحباً بك يا ${foundAdmin.username}`);
             } else { 
-                alert('خطأ في كلمة السر'); 
+                alert('خطأ في اسم المستخدم أو كلمة السر'); 
                 speak('كلمة السر غير صحيحة');
             }
         }
@@ -477,16 +607,23 @@
         }
 
         function switchTab(tab) {
+            document.getElementById('tabEmp').classList.add('hidden');
+            document.getElementById('tabMgr').classList.add('hidden');
+            document.getElementById('tabRep').classList.add('hidden');
+
+            document.getElementById('tabEmpBtn').className = "px-4 py-2 font-bold text-sm text-slate-400";
+            document.getElementById('tabMgrBtn').className = "px-4 py-2 font-bold text-sm text-slate-400";
+            document.getElementById('tabRepBtn').className = "px-4 py-2 font-bold text-sm text-slate-400";
+
             if (tab === 'emp') {
                 document.getElementById('tabEmp').classList.remove('hidden');
-                document.getElementById('tabRep').classList.add('hidden');
                 document.getElementById('tabEmpBtn').className = "px-4 py-2 font-bold text-sm text-emerald-400 border-b-2 border-emerald-500";
-                document.getElementById('tabRepBtn').className = "px-4 py-2 font-bold text-sm text-slate-400";
+            } else if (tab === 'mgr') {
+                document.getElementById('tabMgr').classList.remove('hidden');
+                document.getElementById('tabMgrBtn').className = "px-4 py-2 font-bold text-sm text-amber-400 border-b-2 border-amber-500";
             } else {
-                document.getElementById('tabEmp').classList.add('hidden');
                 document.getElementById('tabRep').classList.remove('hidden');
                 document.getElementById('tabRepBtn').className = "px-4 py-2 font-bold text-sm text-emerald-400 border-b-2 border-emerald-500";
-                document.getElementById('tabEmpBtn').className = "px-4 py-2 font-bold text-sm text-slate-400";
             }
         }
     </script>
