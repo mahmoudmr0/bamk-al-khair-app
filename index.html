@@ -246,7 +246,7 @@
 
     <!-- JavaScript App Logic -->
     <script>
-        const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbzv4s5UvViX10aH_u_4zLNXPbdvzRhQb2hAX3lTEeqXYcapavdyrhfU98LFUm-wKNmf/exec";
+        const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbz6KCMe9--_LOKi4i9x5WLWcuXh27SkLK5_NcV8bU-W9pXOxTDqc6ga2lVXOvNBFGFV/exec";
 
         let cloudEmployees = [];
         let cloudLogs = [];
@@ -366,7 +366,6 @@
             const dateStr = now.toISOString().split('T')[0];
             const timeStr = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
 
-            // الفحص والتأكد من عدم التكرار (منع دخول مرتين متتاليتين أو خروج مرتين متتاليتين)
             const empLogsToday = cloudLogs.filter(l => 
                 l.empName === detectedEmp.fullName && 
                 l.date === dateStr
@@ -509,7 +508,6 @@
         }
 
         function renderTables() {
-            // 1. جدول الموظفين
             const empBody = document.getElementById('empTableBody');
             empBody.innerHTML = '';
             cloudEmployees.forEach((e, idx) => {
@@ -527,7 +525,6 @@
                 `;
             });
 
-            // 2. جدول المديرين
             const mgrBody = document.getElementById('mgrTableBody');
             if (mgrBody) {
                 mgrBody.innerHTML = '';
@@ -542,7 +539,6 @@
                 });
             }
 
-            // 3. جدول التقارير
             const selectedBranch = document.getElementById('branchFilter').value;
             const repBody = document.getElementById('repTableBody');
             repBody.innerHTML = '';
@@ -574,7 +570,6 @@
             const u = document.getElementById('adminUser').value.trim();
             const p = document.getElementById('adminPass').value.trim();
 
-            // البحث في قائمة المديرين القادمة من شيت جوجل
             const foundAdmin = cloudAdmins.find(a => String(a.username).trim() === u && String(a.password).trim() === p);
 
             if (foundAdmin) {
