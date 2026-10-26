@@ -11,6 +11,17 @@
         body { font-family: 'Cairo', sans-serif; background-color: #0f172a; color: #f8fafc; }
         .numpad-btn { transition: all 0.15s ease; }
         .numpad-btn:active { transform: scale(0.92); }
+
+        @media print {
+            body { background-color: #ffffff !important; color: #000000 !important; }
+            header, #employeeSection, #adminLoginForm, .no-print { display: none !important; }
+            #adminModal { position: static !important; background: transparent !important; backdrop-filter: none !important; }
+            #adminDashboard { max-height: none !important; overflow: visible !important; border: none !important; background: transparent !important; color: #000 !important; }
+            table { width: 100% !important; border-collapse: collapse !important; color: #000 !important; }
+            th, td { border: 1px solid #333 !important; padding: 8px !important; text-color: #000 !important; color: #000 !important; }
+            th { background-color: #f1f5f9 !important; }
+            .hide-on-print { display: none !important; }
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between bg-slate-900" onload="loadCloudData()">
@@ -106,7 +117,7 @@
         </div>
 
         <div id="adminDashboard" class="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-5xl max-h-[90vh] overflow-y-auto hidden">
-            <div class="flex justify-between items-center pb-4 border-b border-slate-700 mb-6">
+            <div class="flex justify-between items-center pb-4 border-b border-slate-700 mb-6 no-print">
                 <div>
                     <h3 class="text-xl font-bold text-emerald-400">لوحة الإدارة الموحدة</h3>
                     <p id="loggedAdminBadge" class="text-xs text-amber-300 font-bold mt-1"></p>
@@ -114,14 +125,14 @@
                 <button onclick="logoutAdmin()" class="bg-rose-900/60 text-rose-200 px-3 py-1.5 rounded-lg text-xs font-bold">تسجيل الخروج</button>
             </div>
 
-            <div class="flex border-b border-slate-700 mb-6">
+            <div class="flex border-b border-slate-700 mb-6 no-print">
                 <button id="tabEmpBtn" onclick="switchTab('emp')" class="px-4 py-2 font-bold text-sm text-emerald-400 border-b-2 border-emerald-500">إدارة الموظفين والفروع</button>
                 <button id="tabMgrBtn" onclick="switchTab('mgr')" class="px-4 py-2 font-bold text-sm text-slate-400">إضافة مدير فرع</button>
                 <button id="tabRepBtn" onclick="switchTab('rep')" class="px-4 py-2 font-bold text-sm text-slate-400">التقارير وسجلات الحضور</button>
             </div>
 
             <!-- Tab 1: Employees and Branches -->
-            <div id="tabEmp" class="space-y-6">
+            <div id="tabEmp" class="space-y-6 no-print">
                 <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-4">
                     <h4 id="formTitle" class="text-sm font-bold text-slate-200">إضافة موظف جديد</h4>
                     <input type="hidden" id="editEmpIndex" value="-1">
@@ -175,7 +186,7 @@
             </div>
 
             <!-- Tab 2: Add Branch Manager -->
-            <div id="tabMgr" class="space-y-6 hidden">
+            <div id="tabMgr" class="space-y-6 hidden no-print">
                 <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-4">
                     <h4 class="text-sm font-bold text-amber-400">إضافة مدير فرع جديد (يتخزن في جوجل شيت فوراً)</h4>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -215,14 +226,26 @@
 
             <!-- Tab 3: Reports -->
             <div id="tabRep" class="space-y-6 hidden">
-                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4 no-print">
                     <div class="flex items-center gap-3 w-full sm:w-auto">
                         <label for="branchFilter" class="text-sm font-bold text-slate-200 whitespace-nowrap">عرض تقرير فرع:</label>
                         <select id="branchFilter" onchange="renderTables()" class="bg-slate-800 border border-slate-700 text-emerald-400 font-bold rounded-lg p-2 text-sm w-full sm:w-64 focus:outline-none">
                             <option value="ALL">كل الفروع</option>
                         </select>
                     </div>
-                    <span id="reportCount" class="text-xs text-slate-400 font-semibold"></span>
+
+                    <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                        <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2 px-3 rounded-lg flex items-center gap-1.5 shadow transition">
+                            <i class="fa-solid fa-file-excel"></i> تصدير Excel
+                        </button>
+                        <button onclick="printReport()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold py-2 px-3 rounded-lg flex items-center gap-1.5 border border-slate-600 transition">
+                            <i class="fa-solid fa-print"></i> طباعة التقرير
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center text-xs text-slate-400 font-semibold px-1">
+                    <span id="reportCount"></span>
                 </div>
 
                 <div class="overflow-x-auto bg-slate-900 rounded-xl border border-slate-700">
@@ -235,6 +258,7 @@
                                 <th class="p-3">وقت الدخول</th>
                                 <th class="p-3">وقت الخروج</th>
                                 <th class="p-3">حالة الشفت</th>
+                                <th class="p-3 text-center hide-on-print">إجراءات</th>
                             </tr>
                         </thead>
                         <tbody id="repTableBody"></tbody>
@@ -366,21 +390,20 @@
             const dateStr = now.toISOString().split('T')[0];
             const timeStr = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
 
-            const empLogsToday = cloudLogs.filter(l => 
-                l.empName === detectedEmp.fullName && 
-                l.date === dateStr
+            const empLogs = cloudLogs.filter(l => 
+                String(l.empName).trim() === String(detectedEmp.fullName).trim()
             );
 
-            const lastLog = empLogsToday.length > 0 ? empLogsToday[empLogsToday.length - 1] : null;
+            const lastLog = empLogs.length > 0 ? empLogs[empLogs.length - 1] : null;
 
             if (type === 'IN') {
-                if (lastLog && lastLog.status === 'حضور') {
+                if (lastLog && (lastLog.status === 'حضور' || lastLog.status === 'دخول')) {
                     document.getElementById('statusMsg').innerText = `⚠️ ${detectedEmp.fullName} مسجل دخول بالفعل! يجب تسجيل الخروج أولاً.`;
                     speak('أنت مسجل دخول بالفعل');
                     return;
                 }
             } else if (type === 'OUT') {
-                if (!lastLog || lastLog.status === 'انصراف') {
+                if (!lastLog || lastLog.status === 'انصراف' || lastLog.status === 'خروج') {
                     document.getElementById('statusMsg').innerText = `⚠️ ${detectedEmp.fullName} غير مسجل دخول اليوم! يجب تسجيل الدخول أولاً.`;
                     speak('يجب تسجيل الدخول أولاً');
                     return;
@@ -395,6 +418,15 @@
                 outTime: type === 'OUT' ? timeStr : '--',
                 status: type === 'IN' ? 'حضور' : 'انصراف'
             };
+
+            cloudLogs.push({
+                branchName: detectedEmp.branchName,
+                empName: detectedEmp.fullName,
+                date: dateStr,
+                inTime: payload.inTime,
+                outTime: payload.outTime,
+                status: payload.status
+            });
 
             fetch(GOOGLE_SHEET_URL, {
                 method: "POST",
@@ -498,6 +530,67 @@
             }
         }
 
+        async function deleteReportLog(originalIndex) {
+            const log = cloudLogs[originalIndex];
+            if (confirm(`هل أنت تأكد من حذف سجل (${log.status}) للموظف (${log.empName}) بتاريخ ${log.date} من الشيت بشكل نهائي؟`)) {
+                
+                // إرسال خصائص السجل بدلاً من رقمه لضمان المطابقة في جوجل شيت
+                const payload = {
+                    action: 'DELETE_LOG',
+                    branchName: log.branchName,
+                    empName: log.empName,
+                    date: log.date,
+                    status: log.status
+                };
+
+                // تحديث الواجهة فوراً
+                cloudLogs.splice(originalIndex, 1);
+                renderTables();
+
+                // إرسال أمر الحذف الآمن إلى Google Apps Script
+                await fetch(GOOGLE_SHEET_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                alert('تم إرسال أمر الحذف لـ Google Sheets بنجاح!');
+                setTimeout(loadCloudData, 2000);
+            }
+        }
+
+        function exportToExcel() {
+            const selectedBranch = document.getElementById('branchFilter').value;
+            let logsToExport = cloudLogs;
+            if (selectedBranch !== 'ALL') {
+                logsToExport = cloudLogs.filter(l => String(l.branchName).trim() === selectedBranch.trim());
+            }
+
+            if (logsToExport.length === 0) {
+                alert('لا توجد سجلات متاحة للتصدير');
+                return;
+            }
+
+            let csvContent = "\uFEFFالفرع,اسم الموظف,التاريخ,وقت الدخول,وقت الخروج,حالة الشفت\n";
+            logsToExport.forEach(l => {
+                csvContent += `"${l.branchName}","${l.empName}","${l.date}","${l.inTime}","${l.outTime}","${l.status}"\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `تقرير_الحضور_${selectedBranch}_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function printReport() {
+            window.print();
+        }
+
         function resetForm() {
             document.getElementById('empFullName').value = '';
             document.getElementById('empJobTitle').value = '';
@@ -543,14 +636,17 @@
             const repBody = document.getElementById('repTableBody');
             repBody.innerHTML = '';
 
-            let filteredLogs = cloudLogs;
+            let filteredLogsWithIndices = cloudLogs.map((log, index) => ({ log, originalIndex: index }));
+
             if (selectedBranch !== 'ALL') {
-                filteredLogs = cloudLogs.filter(l => String(l.branchName).trim() === selectedBranch.trim());
+                filteredLogsWithIndices = filteredLogsWithIndices.filter(item => String(item.log.branchName).trim() === selectedBranch.trim());
             }
 
-            document.getElementById('reportCount').innerText = `عدد السجلات المعروضة: ${filteredLogs.length}`;
+            document.getElementById('reportCount').innerText = `عدد السجلات المعروضة: ${filteredLogsWithIndices.length}`;
 
-            filteredLogs.slice().reverse().forEach(l => {
+            filteredLogsWithIndices.slice().reverse().forEach(item => {
+                const l = item.log;
+                const origIdx = item.originalIndex;
                 repBody.innerHTML += `
                     <tr class="border-b border-slate-800">
                         <td class="p-3 font-bold text-amber-400">${l.branchName}</td>
@@ -559,6 +655,9 @@
                         <td class="p-3 text-emerald-400">${l.inTime}</td>
                         <td class="p-3 text-rose-400">${l.outTime}</td>
                         <td class="p-3">${l.status}</td>
+                        <td class="p-3 text-center hide-on-print">
+                            <button onclick="deleteReportLog(${origIdx})" class="text-rose-400 hover:text-rose-300 p-1" title="حذف السجل"><i class="fa-solid fa-trash"></i></button>
+                        </td>
                     </tr>
                 `;
             });
