@@ -390,6 +390,7 @@
             const dateStr = now.toISOString().split('T')[0];
             const timeStr = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
 
+            // البحث عن آخر سجل للموظف
             const empLogs = cloudLogs.filter(l => 
                 String(l.empName).trim() === String(detectedEmp.fullName).trim()
             );
@@ -414,20 +415,16 @@
                 branchName: detectedEmp.branchName,
                 empName: detectedEmp.fullName,
                 date: dateStr,
-                inTime: type === 'IN' ? timeStr : '--',
+                inTime: type === 'IN' ? timeStr : (lastLog ? lastLog.inTime : '--'),
                 outTime: type === 'OUT' ? timeStr : '--',
                 status: type === 'IN' ? 'حضور' : 'انصراف'
             };
 
-            cloudLogs.push({
-                branchName: detectedEmp.branchName,
-                empName: detectedEmp.fullName,
-                date: dateStr,
-                inTime: payload.inTime,
-                outTime: payload.outTime,
-                status: payload.status
-            });
+            // إضافة السجل للمصفوفة المحلية فوراً حتى تتعرف عليها الشاشة بدون انتظار الشيت
+            cloudLogs.push(payload);
+            renderTables();
 
+            // إرسال البيانات لجوجل شيت في الخلفية
             fetch(GOOGLE_SHEET_URL, {
                 method: "POST",
                 mode: "no-cors",
@@ -444,7 +441,6 @@
             }
 
             setTimeout(clearPin, 2000);
-            setTimeout(loadCloudData, 3000);
         }
 
         async function saveEmployeeToCloud() {
@@ -526,7 +522,7 @@
             if (confirm(`هل أنت تأكد من إزالة الموظف (${emp.fullName})؟`)) {
                 cloudEmployees.splice(index, 1);
                 renderTables();
-                alert('تم حذف الموظف من القائمة (يمكنك تعديل صفه في شيت جوجل أيضاً).');
+                alert('تم حذف الموظف من القائمة.');
             }
         }
 
@@ -534,7 +530,6 @@
             const log = cloudLogs[originalIndex];
             if (confirm(`هل أنت تأكد من حذف سجل (${log.status}) للموظف (${log.empName}) بتاريخ ${log.date} من الشيت بشكل نهائي؟`)) {
                 
-                // إرسال خصائص السجل بدلاً من رقمه لضمان المطابقة في جوجل شيت
                 const payload = {
                     action: 'DELETE_LOG',
                     branchName: log.branchName,
@@ -543,11 +538,9 @@
                     status: log.status
                 };
 
-                // تحديث الواجهة فوراً
                 cloudLogs.splice(originalIndex, 1);
                 renderTables();
 
-                // إرسال أمر الحذف الآمن إلى Google Apps Script
                 await fetch(GOOGLE_SHEET_URL, {
                     method: "POST",
                     mode: "no-cors",
@@ -556,7 +549,6 @@
                 });
 
                 alert('تم إرسال أمر الحذف لـ Google Sheets بنجاح!');
-                setTimeout(loadCloudData, 2000);
             }
         }
 
@@ -686,6 +678,8 @@
                     branchFilter.disabled = false;
                 }
 
+                // فتح التبويب الثالث (التقارير وسجلات الحضور) مباشرة عند دخول المدير لرؤية الأزرار والحذف والطباعة
+                switchTab('rep');
                 renderTables();
                 speak(`مرحباً بك يا ${foundAdmin.username}`);
             } else { 
