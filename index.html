@@ -140,6 +140,7 @@ body{font-family:'Cairo',sans-serif;background:#0f172a;color:#f8fafc}
      <button onclick="refreshData()" class="bg-slate-700 text-slate-200 text-xs font-bold py-2 px-3 rounded-lg border border-slate-600"><i class="fa-solid fa-rotate"></i> تحديث</button>
      <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2 px-3 rounded-lg"><i class="fa-solid fa-file-excel"></i> تصدير Excel</button>
      <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold py-2 px-3 rounded-lg border border-slate-600"><i class="fa-solid fa-print"></i> طباعة</button>
+     <button onclick="delAllLogs()" class="bg-rose-900/60 hover:bg-rose-800 text-rose-200 text-xs font-bold py-2 px-3 rounded-lg border border-rose-800"><i class="fa-solid fa-trash-can"></i> حذف الكل</button>
     </div>
    </div>
    <div id="reportCount" class="text-xs text-slate-400 font-semibold px-1"></div>
@@ -296,6 +297,19 @@ async function delLog(id) {
   try {
     const r = await api({ action: 'DELETE_LOG', token, id });
     if (!r.ok) return alert(r.msg);
+    await refreshData();
+  } catch (e) { alert('فشل الاتصال، لم يتم الحذف'); }
+}
+async function delAllLogs() {
+  const b = $('branchFilter').value || 'ALL', n = filteredLogs().length;
+  if (!n) return alert('لا توجد سجلات للحذف');
+  const lbl = b === 'ALL' ? 'كل الفروع' : 'فرع ' + b;
+  if (!confirm(`سيتم حذف ${n} سجل (${lbl}) نهائياً من الشيت. يفضل تصدير Excel أولاً. هل تريد المتابعة؟`)) return;
+  if (prompt('للتأكيد اكتب كلمة: حذف') !== 'حذف') return;
+  try {
+    const r = await api({ action: 'DELETE_ALL_LOGS', token, branch: b });
+    if (!r.ok) return alert(r.msg);
+    alert('تم حذف ' + r.deleted + ' سجل');
     await refreshData();
   } catch (e) { alert('فشل الاتصال، لم يتم الحذف'); }
 }
