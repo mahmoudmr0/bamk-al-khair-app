@@ -169,10 +169,21 @@ async function api(body) {
   if (j.auth) { logoutAdmin(true); }
   return j;
 }
-function speak(t) {
+function speak(t, lang) {
   if (!('speechSynthesis' in window)) return;
   speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(t); u.lang = 'ar-SA'; speechSynthesis.speak(u);
+  const u = new SpeechSynthesisUtterance(t); u.lang = lang || 'ar-SA'; speechSynthesis.speak(u);
+}
+// اسم فيه حروف عربية = صوت عربي، غير كده = صوت إنجليزي
+function speakName(name, ar, en) {
+  if (/[\u0600-\u06FF]/.test(name)) speak(ar, 'ar-SA'); else speak(en, 'en-US');
+}
+function devId() {
+  try {
+    let d = localStorage.getItem('dev');
+    if (!d) { d = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('dev', d); }
+    return d;
+  } catch (e) { return 'x'; }
 }
 function setStatus(t, cls) { const s = $('statusMsg'); s.textContent = t; s.className = 'mt-4 text-sm font-semibold min-h-[24px] ' + (cls || 'text-slate-400'); }
 
@@ -196,13 +207,13 @@ async function punch(type) {
   busy = true; $('btnIn').disabled = $('btnOut').disabled = true;
   setStatus('جاري التسجيل...');
   try {
-    const r = await api({ action: 'PUNCH', pin, type });
+    const r = await api({ action: 'PUNCH', pin, type, dev: devId() });
     if (r.ok) {
       $('welcomeName').textContent = r.name; $('welcomeTitle').textContent = r.title; $('welcomeBranch').textContent = '📍 ' + r.branch;
       $('welcomeCard').classList.remove('hidden');
       const first = r.name.split(' ')[0];
-      if (type === 'IN') { setStatus('🟢 تم تسجيل دخول: ' + r.name, 'text-emerald-400'); speak('تم تسجيل حضورك بنجاح يا ' + first); }
-      else { setStatus('🔴 تم تسجيل خروج: ' + r.name, 'text-rose-400'); speak('تم تسجيل خروجك بنجاح يا ' + first); }
+      if (type === 'IN') { setStatus('🟢 تم تسجيل دخول: ' + r.name, 'text-emerald-400'); speakName(r.name, 'تم تسجيل حضورك بنجاح يا ' + first, 'Check-in recorded. Welcome ' + first); }
+      else { setStatus('🔴 تم تسجيل خروج: ' + r.name, 'text-rose-400'); speakName(r.name, 'تم تسجيل خروجك بنجاح يا ' + first, 'Check-out recorded. Goodbye ' + first); }
       setTimeout(clearPin2, 3000);
     } else { setStatus('⚠️ ' + r.msg, 'text-amber-400'); speak(r.msg); setTimeout(clearPin2, 3000); }
   } catch (e) { setStatus('❌ فشل الاتصال، لم يتم التسجيل. حاول مرة أخرى', 'text-rose-400'); }
@@ -230,7 +241,7 @@ async function loginAdmin() {
     $('addBranchWrapper').classList.toggle('hidden', !isGen());
     switchTab('rep');
     await refreshData();
-    speak('مرحباً بك يا ' + me.username);
+    speakName(me.username, 'مرحباً بك يا ' + me.username, 'Welcome ' + me.username);
   } catch (e) { alert('خطأ في الاتصال'); }
   finally { $('loginBtn').disabled = false; }
 }
