@@ -6,6 +6,7 @@
 <title>نظام البصمة الإلكترونية - مؤسسة بنك الخير</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
 body{font-family:'Cairo',sans-serif;background:#0f172a;color:#f8fafc}
@@ -139,7 +140,7 @@ body{font-family:'Cairo',sans-serif;background:#0f172a;color:#f8fafc}
     <div class="flex items-center gap-2">
      <button onclick="refreshData()" class="bg-slate-700 text-slate-200 text-xs font-bold py-2 px-3 rounded-lg border border-slate-600"><i class="fa-solid fa-rotate"></i> تحديث</button>
      <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2 px-3 rounded-lg"><i class="fa-solid fa-file-excel"></i> تصدير Excel</button>
-     <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold py-2 px-3 rounded-lg border border-slate-600"><i class="fa-solid fa-print"></i> طباعة</button>
+     <button onclick="printReport()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold py-2 px-3 rounded-lg border border-slate-600"><i class="fa-solid fa-print"></i> طباعة</button>
      <button onclick="delAllLogs()" class="bg-rose-900/60 hover:bg-rose-800 text-rose-200 text-xs font-bold py-2 px-3 rounded-lg border border-rose-800"><i class="fa-solid fa-trash-can"></i> حذف الكل</button>
     </div>
    </div>
@@ -311,6 +312,20 @@ async function delLog(id) {
     await refreshData();
   } catch (e) { alert('فشل الاتصال، لم يتم الحذف'); }
 }
+function printReport() {
+  const ls = filteredLogs();
+  if (!ls.length) return alert('لا توجد سجلات للطباعة');
+  const b = $('branchFilter').value, lbl = (!b || b === 'ALL') ? 'كل الفروع' : b;
+  const rows = ls.map(l => `<tr><td>${esc(l.branchName)}</td><td>${esc(l.empName)}</td><td>${esc(l.date)}</td><td>${esc(l.inTime)}</td><td>${esc(l.outTime)}</td><td>${esc(l.status)}</td></tr>`).join('');
+  const html = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>تقرير الحضور</title><style>body{font-family:Tahoma,Arial,sans-serif;color:#000;margin:16px}h2{margin:0 0 4px}p{margin:0 0 12px;font-size:13px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #333;padding:6px;text-align:right}th{background:#eee}</style></head><body><h2>تقرير الحضور والانصراف - مؤسسة بنك الخير</h2><p>${esc(lbl)} | عدد السجلات: ${ls.length} | ${new Date().toLocaleDateString('en-CA')}</p><table><thead><tr><th>الفرع</th><th>اسم الموظف</th><th>التاريخ</th><th>وقت الدخول</th><th>وقت الخروج</th><th>الحالة</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
+  const w = window.open('', '_blank');
+  if (!w) return alert('المتصفح منع النافذة المنبثقة، اسمح بها لهذا الموقع ثم أعد المحاولة');
+  const page = html.replace('</style>', '.np{margin:12px 0}@media print{.np{display:none}}</style>')
+    .replace('</body>', '<p class="np"><button onclick="window.print()" style="font-size:16px;padding:8px 18px">طباعة / حفظ PDF</button></p></body>');
+  w.document.open(); w.document.write(page); w.document.close();
+  w.focus();
+  setTimeout(() => { try { w.print(); } catch (x) {} }, 600);
+}
 async function delAllLogs() {
   const b = $('branchFilter').value || 'ALL', n = filteredLogs().length;
   if (!n) return alert('لا توجد سجلات للحذف');
@@ -336,6 +351,20 @@ function renderTables() {
   $('repTableBody').innerHTML = ls.slice().reverse().map(l => `<tr class="border-b border-slate-800"><td class="p-3 font-bold text-amber-400">${esc(l.branchName)}</td><td class="p-3 font-bold text-white">${esc(l.empName)}</td><td class="p-3">${esc(l.date)}</td><td class="p-3 text-emerald-400">${esc(l.inTime)}</td><td class="p-3 text-rose-400">${esc(l.outTime)}</td><td class="p-3">${esc(l.status)}</td><td class="p-3 text-center hide-on-print"><button onclick="delLog('${esc(l.id)}')" class="text-rose-400 hover:text-rose-300 p-1"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
 }
 function exportToExcel() {
+  const ls = filteredLogs();
+  if (!ls.length) return alert('لا توجد سجلات متاحة للتصدير');
+  if (typeof XLSX === 'undefined') return exportCsv_(); // لو المكتبة ما اتحملتش (لا يوجد إنترنت) نرجع لـ CSV
+  const head = ['الفرع', 'اسم الموظف', 'التاريخ', 'وقت الدخول', 'وقت الخروج', 'حالة الشفت'];
+  const rows = ls.map(l => [l.branchName, l.empName, l.date, l.inTime, l.outTime, l.status]);
+  const ws = XLSX.utils.aoa_to_sheet([head, ...rows]);
+  ws['!cols'] = [{ wch: 20 }, { wch: 28 }, { wch: 14 }, { wch: 13 }, { wch: 13 }, { wch: 13 }];
+  const wb = XLSX.utils.book_new();
+  wb.Workbook = { Views: [{ RTL: true }] };
+  XLSX.utils.book_append_sheet(wb, ws, 'الحضور');
+  const b = String($('branchFilter').value || 'ALL').replace(/[\\/:*?"<>|]/g, '_');
+  XLSX.writeFile(wb, `تقرير_الحضور_${b}_${new Date().toLocaleDateString('en-CA')}.xlsx`);
+}
+function exportCsv_() {
   const ls = filteredLogs();
   if (!ls.length) return alert('لا توجد سجلات متاحة للتصدير');
   const q = v => { v = String(v ?? ''); if (/^[=+\-@]/.test(v)) v = "'" + v; return '"' + v.replace(/"/g, '""') + '"'; };
