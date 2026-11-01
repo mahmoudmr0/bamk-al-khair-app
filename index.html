@@ -87,6 +87,7 @@ body{font-family:'Cairo',sans-serif;background:#0f172a;color:#f8fafc}
    <button id="tabRepBtn" onclick="switchTab('rep')" class="px-4 py-2 font-bold text-sm whitespace-nowrap">التقارير وسجلات الحضور</button>
    <button id="tabEmpBtn" onclick="switchTab('emp')" class="px-4 py-2 font-bold text-sm whitespace-nowrap">إضافة موظف جديد</button>
    <button id="tabMgrBtn" onclick="switchTab('mgr')" class="px-4 py-2 font-bold text-sm whitespace-nowrap">إضافة مدير فرع</button>
+   <button id="tabDevBtn" onclick="switchTab('dev')" class="px-4 py-2 font-bold text-sm whitespace-nowrap">الأجهزة</button>
   </div>
 
   <div id="tabEmp" class="space-y-6 hidden no-print">
@@ -131,6 +132,28 @@ body{font-family:'Cairo',sans-serif;background:#0f172a;color:#f8fafc}
    </div>
   </div>
 
+  <div id="tabDev" class="space-y-6 hidden no-print">
+   <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-4">
+    <p id="devStatus" class="text-sm font-bold text-amber-300"></p>
+    <p class="text-xs text-slate-400">افتح لوحة الإدارة من نفس الجهاز اللي عايز تسجله، واختار الفرع واكتب اسم للجهاز.</p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+     <div><label class="text-xs text-slate-400 mb-1 block">الفرع:</label><select id="devBranchSelect" class="bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-emerald-400 w-full"></select></div>
+     <div><label class="text-xs text-slate-400 mb-1 block">اسم الجهاز:</label><input type="text" id="devName" placeholder="مثال: استقبال مصر الجديدة" class="bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white w-full"></div>
+    </div>
+    <button id="saveDevBtn" onclick="registerDevice()" class="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold py-2 px-4 rounded-lg text-sm">تسجيل هذا الجهاز</button>
+    <div id="devLockBox" class="pt-3 border-t border-slate-700 space-y-2">
+     <p id="devLockText" class="text-xs text-slate-300"></p>
+     <button id="devLockBtn" onclick="toggleDevLock()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 px-4 rounded-lg text-sm"></button>
+    </div>
+   </div>
+   <div class="overflow-x-auto bg-slate-900 rounded-xl border border-slate-700">
+    <table class="w-full text-right text-xs text-slate-300">
+     <thead class="bg-slate-800 text-slate-200"><tr><th class="p-3">الفرع</th><th class="p-3">اسم الجهاز</th><th class="p-3">تاريخ التسجيل</th><th class="p-3 text-center">حذف</th></tr></thead>
+     <tbody id="devTableBody"></tbody>
+    </table>
+   </div>
+  </div>
+
   <div id="tabRep" class="space-y-6">
    <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4 no-print">
     <div class="flex items-center gap-3 w-full sm:w-auto">
@@ -148,7 +171,7 @@ body{font-family:'Cairo',sans-serif;background:#0f172a;color:#f8fafc}
    <div class="overflow-x-auto bg-slate-900 rounded-xl border border-slate-700">
     <table class="w-full text-right text-xs text-slate-300">
      <thead class="bg-slate-800 text-slate-200">
-      <tr><th class="p-3">الفرع</th><th class="p-3">اسم الموظف</th><th class="p-3">التاريخ</th><th class="p-3">وقت الدخول</th><th class="p-3">وقت الخروج</th><th class="p-3">الحالة</th><th class="p-3 text-center hide-on-print">حذف</th></tr>
+      <tr><th class="p-3">الفرع</th><th class="p-3">اسم الموظف</th><th class="p-3">التاريخ</th><th class="p-3">وقت الدخول</th><th class="p-3">وقت الخروج</th><th class="p-3">الحالة</th><th class="p-3 text-center hide-on-print">الصور</th><th class="p-3 text-center hide-on-print">حذف</th></tr>
      </thead>
      <tbody id="repTableBody"></tbody>
     </table>
@@ -157,9 +180,21 @@ body{font-family:'Cairo',sans-serif;background:#0f172a;color:#f8fafc}
  </div>
 </div>
 
+<div id="photoModal" class="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center hidden p-4 no-print" onclick="if(event.target===this)closePhoto()">
+ <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 w-full max-w-md text-center space-y-3">
+  <p id="photoCap" class="text-sm font-bold text-slate-100"></p>
+  <p id="photoMsg" class="text-xs text-slate-400"></p>
+  <img id="photoImg" alt="صورة الموظف" class="w-full rounded-xl">
+  <div class="flex gap-2 justify-center">
+   <a id="photoDl" class="hidden bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold py-2 px-4 rounded-lg"><i class="fa-solid fa-download"></i> تنزيل الصورة</a>
+   <button onclick="closePhoto()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-bold py-2 px-4 rounded-lg">إغلاق</button>
+  </div>
+ </div>
+</div>
+
 <script>
 const API = "https://script.google.com/macros/s/AKfycbz6KCMe9--_LOKi4i9x5WLWcuXh27SkLK5_NcV8bU-W9pXOxTDqc6ga2lVXOvNBFGFV/exec";
-let D = { employees: [], logs: [], admins: [], branches: [] };
+let D = { employees: [], logs: [], admins: [], branches: [], devices: [], thisDevice: null, devLock: false };
 let pin = '', token = null, me = null, busy = false;
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -182,7 +217,7 @@ function speakName(name, ar, en) {
 function devId() {
   try {
     let d = localStorage.getItem('dev');
-    if (!d) { d = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('dev', d); }
+    if (!d || d.length < 24) { d = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join(''); localStorage.setItem('dev', d); }
     return d;
   } catch (e) { return 'x'; }
 }
@@ -208,8 +243,10 @@ async function punch(type) {
   busy = true; $('btnIn').disabled = $('btnOut').disabled = true;
   setStatus('جاري التسجيل...');
   try {
+    const photoP = snap();
     const r = await api({ action: 'PUNCH', pin, type, dev: devId() });
     if (r.ok) {
+      photoP.then(img => { if (img && r.photoToken) api({ action: 'PHOTO', token: r.photoToken, img }).catch(() => {}); });
       $('welcomeName').textContent = r.name; $('welcomeTitle').textContent = r.title; $('welcomeBranch').textContent = '📍 ' + r.branch;
       $('welcomeCard').classList.remove('hidden');
       const first = r.name.split(' ')[0];
@@ -247,15 +284,15 @@ async function loginAdmin() {
   finally { $('loginBtn').disabled = false; }
 }
 function logoutAdmin(expired) {
-  token = null; me = null; D = { employees: [], logs: [], admins: [], branches: [] };
-  ['repTableBody', 'empTableBody', 'mgrTableBody'].forEach(i => $(i).innerHTML = '');
+  token = null; me = null; D = { employees: [], logs: [], admins: [], branches: [], devices: [], thisDevice: null, devLock: false };
+  ['repTableBody', 'empTableBody', 'mgrTableBody', 'devTableBody'].forEach(i => $(i).innerHTML = '');
   $('adminDashboard').classList.add('hidden'); $('adminLoginForm').classList.remove('hidden');
   if (!expired) toggleAdminModal();
 }
 async function refreshData() {
-  const r = await api({ action: 'DATA', token });
+  const r = await api({ action: 'DATA', token, dev: devId() });
   if (!r.ok) return alert(r.msg);
-  D = r; updateBranchDropdowns(); renderTables();
+  D = r; updateBranchDropdowns(); renderTables(); renderDevices();
 }
 function updateBranchDropdowns() {
   const keep = $('empBranchSelect').value, f = $('branchFilter').value;
@@ -263,6 +300,7 @@ function updateBranchDropdowns() {
   const opts = bs.map(b => `<option value="${esc(b)}">${esc(b)}</option>`).join('');
   $('branchFilter').innerHTML = (isGen() ? '<option value="ALL">كل الفروع</option>' : '') + opts;
   $('empBranchSelect').innerHTML = opts;
+  $('devBranchSelect').innerHTML = opts; $('devBranchSelect').disabled = !isGen();
   $('mgrBranchSelect').innerHTML = '<option value="الكل">الكل (مدير عام)</option>' + opts;
   if (keep && bs.includes(keep)) $('empBranchSelect').value = keep;
   if (f && [...$('branchFilter').options].some(o => o.value === f)) $('branchFilter').value = f;
@@ -326,6 +364,83 @@ function printReport() {
   w.focus();
   setTimeout(() => { try { w.print(); } catch (x) {} }, 600);
 }
+// صورة سيلفي تلقائية: تتفتح الكاميرا لحظات وقت التسجيل وتتقفل (لو رفض الإذن، التسجيل يكمل عادي)
+async function snap() {
+  try {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return null;
+    const st = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 360 } }, audio: false });
+    try {
+      const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.srcObject = st;
+      await v.play();
+      await new Promise(r => setTimeout(r, 700));
+      const w = v.videoWidth || 480, h = v.videoHeight || 360, k = Math.min(1, 480 / w);
+      const c = document.createElement('canvas'); c.width = Math.round(w * k); c.height = Math.round(h * k);
+      const g = c.getContext('2d');
+      g.drawImage(v, 0, 0, c.width, c.height);
+      g.fillStyle = 'rgba(0,0,0,0.55)'; g.fillRect(0, c.height - 22, c.width, 22);
+      g.fillStyle = '#fff'; g.font = '14px Arial'; g.fillText(new Date().toLocaleString('en-GB'), 6, c.height - 6);
+      return c.toDataURL('image/jpeg', 0.6);
+    } finally { st.getTracks().forEach(t => t.stop()); }
+  } catch (e) { return null; }
+}
+function photoLinks(l) {
+  const b = (on, t, ty) => on ? `<button onclick="showPhoto('${esc(l.id)}','${ty}')" class="text-sky-400 underline mx-1"><i class="fa-solid fa-camera"></i> ${t}</button>` : '';
+  return (b(l.inPhoto, 'دخول', 'IN') + b(l.outPhoto, 'خروج', 'OUT')) || '--';
+}
+async function showPhoto(id, type) {
+  const l = D.logs.find(x => x.id === id); if (!l) return;
+  const tx = type === 'IN' ? 'دخول' : 'خروج';
+  $('photoCap').textContent = `${l.empName} — ${tx} — ${l.date} ${type === 'IN' ? l.inTime : l.outTime}`;
+  $('photoImg').removeAttribute('src'); $('photoMsg').textContent = 'جاري تحميل الصورة...';
+  $('photoDl').classList.add('hidden'); $('photoModal').classList.remove('hidden');
+  try {
+    const r = await api({ action: 'PHOTO_GET', token, id, type });
+    if (!r.ok) { $('photoMsg').textContent = r.msg || 'تعذر تحميل الصورة'; return; }
+    $('photoImg').src = r.img; $('photoMsg').textContent = '';
+    const a = $('photoDl'); a.href = r.img;
+    a.download = `${l.empName}_${tx}_${l.date}.jpg`.replace(/[\\/:*?"<>|]/g, '_');
+    a.classList.remove('hidden');
+  } catch (e) { $('photoMsg').textContent = 'فشل الاتصال'; }
+}
+function closePhoto() { $('photoModal').classList.add('hidden'); $('photoImg').removeAttribute('src'); }
+function renderDevices() {
+  $('devStatus').textContent = D.thisDevice ? `هذا الجهاز مسجل باسم "${D.thisDevice.name}" (فرع ${D.thisDevice.branch})` : 'هذا الجهاز غير مسجل';
+  $('devTableBody').innerHTML = D.devices.map(d => `<tr class="border-b border-slate-800"><td class="p-3 font-bold text-amber-400">${esc(d.branchName)}</td><td class="p-3 font-bold text-white">${esc(d.name)}</td><td class="p-3">${esc(d.date)}</td><td class="p-3 text-center"><button onclick="delDevice('${esc(d.id)}')" class="text-rose-400 hover:text-rose-300 p-1"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
+  $('devLockBox').classList.toggle('hidden', !isGen());
+  $('devLockText').textContent = D.devLock ? 'الحماية مفعّلة: الموظفون يسجلون من الأجهزة المسجلة لفرعهم فقط.' : 'الحماية متوقفة: الموظفون يسجلون من أي جهاز. سجّل أجهزة كل الفروع أولاً ثم فعّل الحماية.';
+  $('devLockBtn').textContent = D.devLock ? 'إيقاف الحماية' : 'تفعيل الحماية';
+}
+async function registerDevice() {
+  const n = $('devName').value.trim();
+  if (!n) return alert('اكتب اسم للجهاز (مثلاً: استقبال مصر الجديدة)');
+  $('saveDevBtn').disabled = true;
+  try {
+    const r = await api({ action: 'ADD_DEVICE', token, dev: devId(), branch: $('devBranchSelect').value, name: n });
+    if (!r.ok) return alert(r.msg);
+    $('devName').value = '';
+    alert('تم تسجيل هذا الجهاز');
+    await refreshData();
+  } catch (e) { alert('فشل الاتصال، لم يتم الحفظ'); }
+  finally { $('saveDevBtn').disabled = false; }
+}
+async function delDevice(id) {
+  const d = D.devices.find(x => x.id === id); if (!d) return;
+  if (!confirm(`حذف الجهاز "${d.name}"؟ لن يستطيع الموظفون التسجيل منه بعد التفعيل.`)) return;
+  try {
+    const r = await api({ action: 'DEL_DEVICE', token, id });
+    if (!r.ok) return alert(r.msg);
+    await refreshData();
+  } catch (e) { alert('فشل الاتصال، لم يتم الحذف'); }
+}
+async function toggleDevLock() {
+  const on = !D.devLock;
+  if (on && !confirm('عند التفعيل، أي جهاز غير مسجل مش هيقدر يسجل حضور. اتأكد إنك سجلت جهاز كل فرع. متابعة؟')) return;
+  try {
+    const r = await api({ action: 'SET_DEV_LOCK', token, on });
+    if (!r.ok) return alert(r.msg);
+    await refreshData();
+  } catch (e) { alert('فشل الاتصال'); }
+}
 async function delAllLogs() {
   const b = $('branchFilter').value || 'ALL', n = filteredLogs().length;
   if (!n) return alert('لا توجد سجلات للحذف');
@@ -348,7 +463,7 @@ function renderTables() {
   $('mgrTableBody').innerHTML = D.admins.map(a => `<tr class="border-b border-slate-800"><td class="p-3 font-bold text-amber-400">${esc(a.branch)}</td><td class="p-3 font-bold text-emerald-400">${esc(a.username)}</td></tr>`).join('');
   const ls = filteredLogs();
   $('reportCount').textContent = 'عدد السجلات المعروضة: ' + ls.length;
-  $('repTableBody').innerHTML = ls.slice().reverse().map(l => `<tr class="border-b border-slate-800"><td class="p-3 font-bold text-amber-400">${esc(l.branchName)}</td><td class="p-3 font-bold text-white">${esc(l.empName)}</td><td class="p-3">${esc(l.date)}</td><td class="p-3 text-emerald-400">${esc(l.inTime)}</td><td class="p-3 text-rose-400">${esc(l.outTime)}</td><td class="p-3">${esc(l.status)}</td><td class="p-3 text-center hide-on-print"><button onclick="delLog('${esc(l.id)}')" class="text-rose-400 hover:text-rose-300 p-1"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
+  $('repTableBody').innerHTML = ls.slice().reverse().map(l => `<tr class="border-b border-slate-800"><td class="p-3 font-bold text-amber-400">${esc(l.branchName)}</td><td class="p-3 font-bold text-white">${esc(l.empName)}</td><td class="p-3">${esc(l.date)}</td><td class="p-3 text-emerald-400">${esc(l.inTime)}</td><td class="p-3 text-rose-400">${esc(l.outTime)}</td><td class="p-3">${esc(l.status)}</td><td class="p-3 text-center hide-on-print">${photoLinks(l)}</td><td class="p-3 text-center hide-on-print"><button onclick="delLog('${esc(l.id)}')" class="text-rose-400 hover:text-rose-300 p-1"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
 }
 function exportToExcel() {
   const ls = filteredLogs();
@@ -377,11 +492,11 @@ function exportCsv_() {
 }
 function switchTab(tab) {
   if (tab === 'mgr' && !isGen()) tab = 'rep';
-  ['Emp', 'Mgr', 'Rep'].forEach(t => {
+  ['Emp', 'Mgr', 'Dev', 'Rep'].forEach(t => {
     $('tab' + t).classList.add('hidden');
     $('tab' + t + 'Btn').className = 'px-4 py-2 font-bold text-sm whitespace-nowrap text-slate-400' + ($('tab' + t + 'Btn').classList.contains('hidden') ? ' hidden' : '');
   });
-  const t = { emp: 'Emp', mgr: 'Mgr', rep: 'Rep' }[tab];
+  const t = { emp: 'Emp', mgr: 'Mgr', dev: 'Dev', rep: 'Rep' }[tab];
   $('tab' + t).classList.remove('hidden');
   $('tab' + t + 'Btn').className = 'px-4 py-2 font-bold text-sm whitespace-nowrap text-' + (t === 'Mgr' ? 'amber' : 'emerald') + '-400 border-b-2 border-' + (t === 'Mgr' ? 'amber' : 'emerald') + '-500';
 }
